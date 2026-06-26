@@ -45,11 +45,11 @@
 % Format hyperlinks as blue and set PDF title based on \title{} in the document.
 \RequirePackage[pdfusetitle]{hyperref}
 \hypersetup{
-    pdftex,
-    breaklinks=true,
-    colorlinks=true,
-    linkcolor=.,
-    urlcolor=blue
+  pdftex,
+  breaklinks=true,
+  colorlinks=true,
+  linkcolor=.,
+  urlcolor=blue
 }
 
 % Configure page margins
@@ -66,48 +66,48 @@
 
 % First page title layout is defined here
 \renewcommand{\maketitle}{%
-    \twocolumn[%
-        {\Huge\sffamily\bfseries\@title} {\hfill{\@companylogo}}\\
-        \noindent\rule{\textwidth}{1pt}
-        \medskip
-        ]%
-        \pagestyle{normalpage}
-        \thispagestyle{firstpage}
+  \twocolumn[%
+    {\Huge\sffamily\bfseries\@title} {\hfill{\@companylogo}}\\
+    \noindent\rule{\textwidth}{1pt}
+    \medskip
+  ]%
+  \pagestyle{normalpage}
+  \thispagestyle{firstpage}
 }
 
 % First page has footer but no header
 \RequirePackage{fancyhdr}
 \RequirePackage{lastpage}
 \fancypagestyle{firstpage}{
-    \fancyhf{}
-    \renewcommand{\headrulewidth}{0pt}
-    \renewcommand{\footrulewidth}{0.5pt}
-    \fancyfoot[L]{\@revision}
-    \fancyfoot[C]{\@date}
-    \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.5pt}
+  \fancyfoot[L]{\@revision}
+  \fancyfoot[C]{\@date}
+  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
 }
 
 % Rest of the pages have both header and footer
 \fancypagestyle{normalpage}{
-    \renewcommand{\headrulewidth}{0.5pt}
-    \renewcommand{\footrulewidth}{0.5pt}
-    \fancyhead[C]{\includegraphics[scale=0.01]{../figures/utat_ss.png}}
-    \fancyhead[L]{\slshape\@title}
-    \fancyhead[R]{\@date}
-    \fancyfoot[L]{\@revision}
-    \fancyfoot[C]{\@date}
-    \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
+  \renewcommand{\headrulewidth}{0.5pt}
+  \renewcommand{\footrulewidth}{0.5pt}
+  \fancyhead[C]{\includegraphics[scale=0.01]{../figures/utat_ss.png}}
+  \fancyhead[L]{\slshape\@title}
+  \fancyhead[R]{\@date}
+  \fancyfoot[L]{\@revision}
+  \fancyfoot[C]{\@date}
+  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
 }
 
 % No line above footnotes
 \renewcommand\footnoterule{}
 
 % Section header size and spacing
-\renewcommand{\section}{%
-    \@startsection
-    {section}{1}{0pt}{-3.5ex plus -2ex minus -1ex}%
-    {2.5ex plus .5ex}{\Large\bfseries\sffamily}%
-}
+% \renewcommand{\section}{%
+%     \@startsection
+%     {section}{1}{0pt}{-3.5ex plus -2ex minus -1ex}%
+%     {2.5ex plus .5ex}{\normalfont\Large\bfseries}%
+% }
 
 % Spacing between paragraphs
 \setlength{\parskip}{2ex plus 0.5ex minus 0.2ex}

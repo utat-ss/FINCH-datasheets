@@ -41,7 +41,7 @@
 \begin{document}
 \maketitle
 
-\section{Features}
+\section{High-level overview}
 
 \begin{itemize}
   \item{Features an STM32G431RBT6 MCU}
@@ -54,9 +54,8 @@
   \item{}
 \end{itemize}
 
+\section{Introduction}
 
-
-\section{General Description}
 The \textbf{datasheet} document class makes it easy to write great looking
 data sheets using the LaTeX typesetting system. It follows the classic style used
 by most manufacturers of electronic components.
@@ -81,7 +80,7 @@ You can build the PDF document using command \texttt{latexmk -pdf}.
 % For wide tables, a single column layout is better. It can be switched
 % page-by-page.
 \onecolumn
-\section{Block Diagram}
+\section{Device Overview}
 
 Below is the block diagram that represents th high-level specification of the
 On-Board Computer.
@@ -91,20 +90,29 @@ On-Board Computer.
   \begin{tikzpicture}[>=latex, every node/.style={font=\small}]
     % MCU centered block
     \node[draw, rectangle, minimum width=3.2cm, minimum height=2.2cm, align=center] (mcu) {MCU\\STM32G431RBT6};
-    
+
     % Tall bus block on the right (moved further right to allow label)
     \node[draw, rectangle, minimum width=1.6cm, minimum height=4cm, align=center] (bus) at ($(mcu) + (5.0,0)$) {Bus\\(I2C)};
-    
+
     % I2C connection from MCU to bus
     \draw[->, thick] (mcu.east) -- node[above]{I2C (SDA / SCL)} (bus.west);
-    
+
     % Single straight I2C connection
     % (SDA/SCL noted in the label on the main line)
   \end{tikzpicture}
   \caption{Block diagram: MCU and I2C bus}
 \end{figure}
 
-\section{Bus}
+\section{Specifications}
+
+TODO: cover electrical specifications such as voltage ratings and power
+requirements
+
+\section{Interconnects and Pinout}
+
+TODO: intro
+
+\subsection{Bus}
 The table below maps the J201 connector pins found in the Protel netlist to
 their net labels.
 
@@ -124,17 +132,92 @@ their net labels.
   \getnetlist{../netlists/obs_bus.net}{J201}
 \end{longtable}
 
-\section{RTC}
+\subsubsection{Power}
+
+\subsubsection{EPS connection}
+
+\subsubsection{GPIO}
+
+\subsubsection{GNSS}
+
+\subsubsection{CANbus}
+
+\subsubsection{RS-422}
+
+\subsubsection{RS-485}
+
+\subsubsection{PAY Debug}
+
+\subsection{ADCS}
+
+TODO: specify JTAG pinout and reference layout position; add the image of the
+connector and the BOM part. Make sure to cover the protection circuitry in the
+corresponding subsection.
+
+\subsection{JTAG}
+
+TODO: specify JTAG pinout and reference layout position; add the image of the
+connector and the BOM part
+
+\subsection{SRS-4}
+
+TODO: specify the pinout and reference layout position; add the image of the
+connector and BOM part
+
+\subsection{Thermistors}
+
+TODO: specify the pinout and reference layout position; add the image of the
+connector and BOM part
+
+TODO: describe thermistor muxes used by the OBC, use case, part numbers, and the
+overall design with the opamps
+
+\subsection{Umbillical}
+
+TODO: specify the pinout and reference layout position.
+
+\section{Functional Description}
+
+\subsection{MCU}
+
+TODO: describe some high level details about the MCU selected for the board
+
+\subsection{External Clocks}
+
+TODO: describe the external clocks and the reason for use, specify how they are
+connected to the MCU
+
+\subsection{External Flash Memory}
+
+TODO: descrive the external clocks and the reason for use, specify how its
+connected to the MCU.
+
+\subsection{RTC}
+
+TODO: describe the RTC usecase and specify how it is connected to the MCU
 
 Real time clock (RTC) is a battery-powered external clock available to OBC for
 timekeeping and synchronization purposes.
 
-\section{Electrical Specifications}
-\section{Board Layout}
-\section{Timing}
-\section{Peripherals}
-\section{Sensors}
-\subsection{Thermistors}
-\section{Manufacturing}
+\section{Mechanical and Layout}
+
+TODO: add a isometric view of the board with max height, dimentions and drill
+holes.
+
+TODO: add description of the polygon pours used for power dissipation
+
+\section{Manifacturing}
+
+\subsection{Bill of Materials}
+
+\subsection{Test Points}
+
+TODO: describe available test points within the design and cross reference
+corresponding subsections.
+
+\section{Bringup Log}
+
+TODO: specify tests that have been conducted (reference to notion)
+
 \end{document}
 
