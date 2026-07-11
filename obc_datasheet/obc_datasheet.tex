@@ -1,106 +1,458 @@
-%% Example data sheet
+% !TeX program = lualatex
+
+%% OBC v1.2 Datasheet
+%% Based on the latex-datasheet-template.
+%%
 %% Feel free to modify and use this file for any purpose, under
 %% either the LaTeX Project Public License or under public domain.
 
-% Options here are passed to the article class.
-% Most common options: 10pt, 11pt, 12pt
-
 \documentclass[10pt]{../datasheet}
 
-% Input encoding and typographical rules for English language
+% natbib is loaded by ../preamble.tex.
+% Pass numerical IEEE-style citation options before natbib is loaded.
+\PassOptionsToPackage{numbers,sort&compress}{natbib}
+
+% Input encoding and English language rules
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage[english]{isodate}
 
-% tikz is used to draw images in this example, but you can
-% also use \includegraphics{}.
+% Figures and diagrams
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{circuitikz}
 \usetikzlibrary{calc}
 
-% These define global texts that are used in headers and titles.
+% Use a current pgfplots compatibility level
+\pgfplotsset{compat=1.18}
+
+% Load the netlist helper when it is available.
+% Otherwise, use fallback commands so the document can still compile.
+\ifdefined\directlua
+  \IfFileExists{../netlists/netlisthelper.tex}{%
+    \usepackage{luacode}
+    \input{../netlists/netlisthelper.tex}
+  }{%
+    \providecommand{\includenetlistdiagram}[2]{%
+      \textbf{Netlist diagram unavailable: netlisthelper.tex was not found.}%
+    }
+
+    \providecommand{\getnetlist}[2]{%
+      \multicolumn{2}{l}{%
+        \textit{Netlist table unavailable: netlisthelper.tex was not found.}%
+      }\\
+    }
+  }
+\else
+  \providecommand{\includenetlistdiagram}[2]{%
+    \textbf{Netlist diagrams require compiling with LuaLaTeX.}%
+  }
+
+  \providecommand{\getnetlist}[2]{%
+    \multicolumn{2}{l}{%
+      \textit{Netlist tables require compiling with LuaLaTeX.}%
+    }\\
+  }
+\fi
+
+% Document information
 \title{OBC v1.2 Datasheet}
 \author{UTAT Space Systems}
-\date{May 2025}
+\date{June 2026}
 \revision{Revision 1}
 \companylogo{\includegraphics[scale=0.022]{../figures/utat_ss.png}}
+
+% Shared project packages and formatting
 \input{../preamble}
+% Provide enough room for the datasheet header.
+\setlength{\headheight}{28pt}
+
 \begin{document}
+
 \maketitle
 
-\section{Features}
+\section{High-Level Overview}
 
 \begin{itemize}
-  \item{Features an STM32G431RBT6 MCU}
+  \item Features an STM32G431RBT6 microcontroller
+        \cite{stm32g431-datasheet}
         \begin{description}
-          \item[-] ARM Cortex-M4
-          \item[-] 128 kBytes of Flash
-          \item[-] LQFP-64 Package
+          \item[-] 32-bit Arm Cortex-M4 processor with floating-point support
+          \item[-] Maximum operating frequency of 170~MHz
+          \item[-] 128~kB of internal Flash memory
+          \item[-] 32~kB of SRAM
+          \item[-] LQFP-64 package
         \end{description}
-  \item{HSE: 24MHz. LSE: 32.768kHz}
-  \item{}
+        
+  \item Uses a 24~MHz High-Speed External (HSE) crystal and a
+        32.768~kHz Low-Speed External (LSE) crystal.
+        
+  \item Supports communication and control through SPI,
+        I\textsuperscript{2}C, UART, CAN, GPIO, timer, and analog
+        connections.
 \end{itemize}
 
+\section{Introduction}
 
+The OBC v1.2 serves as the primary processing and coordination board for the
+spacecraft. It runs onboard firmware, communicates with other spacecraft
+subsystems, monitors system signals, and controls board-level functions.
 
-\section{General Description}
-The \textbf{datasheet} document class makes it easy to write great looking
-data sheets using the LaTeX typesetting system. It follows the classic style used
-by most manufacturers of electronic components.
+This datasheet documents the main electrical interfaces, functional blocks,
+connectors, and implementation details of the board. It is intended to preserve
+the design for future team members and support board review, manufacturing,
+bring-up, and future redesign work.
 
-You can download the document class from
-\href{https://github.com/PetteriAimonen/latex-datasheet-template/}{latex-datasheet-template}
-GitHub repository.
-The repository includes this example datasheet as \textbf{example.tex} and
-the document class as \textbf{datasheet.cls}.
-You can build the PDF document using command \texttt{latexmk -pdf}.
-
-% Switch to next column
+% Switch to the next column
 \vfill\break
-
-% \begin{figure}[h]
-%     \begin{circuitikz}[european]
-%         \node[op amp] (amp1) {};
-%         \node[op amp, below = 0.5cm, xscale = -1] (amp2) {};
-%         \draw (amp1.out) |- (amp2.-);
-%         \draw (amp2.-) ++(0, 0.3cm) node[circ]{} to +(2,0) node[above left]{5};
-%         \draw (amp2.out) to (amp1.+);
-%         \draw (amp1.+) ++(0, -0.3cm) node[circ]{} to +(-2,0) node[above right]{2};
-%         \draw (amp1.-) to +(-2,0) node[above right]{1};
-%         \draw (amp2.+) to +(2,0) node[above left]{4};
-%         \draw (amp1.out) +(0,0.5cm) node (Vdd) {$\mathrm{V_{DD}}$};
-%         \draw (Vdd.east) to +(1.5,0) node [above left]{6};
-%         \draw (amp2.out) +(0,-0.5cm) node (Vss) {$\mathrm{V_{SS}}$};
-%         \draw (Vss.west) to +(-1.6,0) node [above right]{3};
-%         \draw ($(amp1.north west) + (-0.5,0.5)$) rectangle ($(amp2.south west) + (0.5,-0.5)$);
-%     \end{circuitikz}
-%     \caption{Pinout and internal circuit}
-% \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\linewidth]{../figures/OBC_SS.png}
   \caption{\centering OBC v1.2}
-  \label{fig:enter-label}
+  \label{fig:obc-v1-2}
 \end{figure}
 
-% For wide tables, a single column layout is better. It can be switched
-% page-by-page.
+% Use a single-column layout for wider figures and tables
 \onecolumn
-\section{Block Diagram}
 
-\section{RTC}
+\section{Device Overview}
 
-Real time clock (RTC) is a battery-powered external clock available to OBC for
-timekeeping and synchronization purposes.
+The block diagram below represents the high-level connection between the MCU
+and the spacecraft bus.
 
-\section{Electrical Specifications}
-\section{Board Layout}
-\section{Timing}
-\section{Peripherals}
-\section{Sensors}
+\begin{figure}[h]
+  \centering
+  
+  \begin{tikzpicture}[>=latex, every node/.style={font=\small}]
+    
+    % MCU block
+    \node[
+      draw,
+      rectangle,
+      minimum width=3.2cm,
+      minimum height=2.2cm,
+      align=center
+    ] (mcu) {MCU\\STM32G431RBT6};
+    
+    % Bus block
+    \node[
+      draw,
+      rectangle,
+      minimum width=1.6cm,
+      minimum height=4cm,
+      align=center
+    ] (bus) at ($(mcu) + (5.0,0)$)
+    {Bus\\(I\textsuperscript{2}C)};
+    
+    % Connection
+    \draw[->, thick]
+    (mcu.east)
+    --
+    node[above]{I\textsuperscript{2}C (SDA/SCL)}
+    (bus.west);
+    
+  \end{tikzpicture}
+  
+  \caption{High-level block diagram of the MCU and spacecraft bus}
+  \label{fig:mcu-i2c-block}
+\end{figure}
+
+\section{Specifications}
+
+TODO: Cover electrical specifications such as voltage ratings, operating
+conditions, and board-level power requirements.
+
+\section{Interconnects and Pinout}
+
+TODO: Add an introduction to the OBC interconnects and pinout.
+
+\subsection{Bus}
+
+The table below maps the J201 connector pins found in the Protel netlist to
+their corresponding net labels.
+
+\begin{longtable}{@{}r l@{}}
+  \hline
+  Pin & Net \\
+  \hline
+  \endfirsthead
+  
+  \hline
+  Pin & Net \\
+  \hline
+  \endhead
+  
+  \hline
+  \endfoot
+  
+  \hline
+  \endlastfoot
+  
+  \getnetlist{../netlists/obs_bus.net}{J201}
+\end{longtable}
+
+\subsubsection{Power}
+
+TODO: Describe the power connections available through the bus connector.
+
+\subsubsection{EPS Connection}
+
+TODO: Describe the bus connections between the OBC and EPS.
+
+\subsubsection{GPIO}
+
+TODO: Describe the general-purpose signals routed through the bus.
+
+\subsubsection{GNSS}
+
+TODO: Describe the GNSS signals routed through the bus.
+
+\subsubsection{CAN Bus}
+
+TODO: Describe the CAN bus connections and corresponding pins.
+
+\subsubsection{RS-422}
+
+TODO: Describe the RS-422 connections and corresponding pins.
+
+\subsubsection{RS-485}
+
+TODO: Describe the RS-485 connections and corresponding pins.
+
+\subsubsection{PAY Debug}
+
+TODO: Describe the payload debug connections and corresponding pins.
+
+\subsection{ADCS}
+
+TODO: Specify the ADCS connector pinout and reference its layout position.
+Add an image of the connector and the corresponding BOM part. Cover the
+protection circuitry in the corresponding subsection.
+
+\subsection{JTAG}
+
+TODO: Specify the JTAG pinout and reference its layout position. Add an image
+of the connector and the corresponding BOM part.
+
+\subsection{SRS-4}
+
+TODO: Specify the pinout and reference its layout position. Add an image of the
+connector and its corresponding BOM part.
+
 \subsection{Thermistors}
-\section{Manufacturing}
-\end{document}
 
+TODO: Specify the thermistor connector pinout and reference its layout
+position. Add an image of the connector and its corresponding BOM part.
+
+TODO: Describe the thermistor multiplexers used by the OBC, their use case,
+part numbers, and the associated operational-amplifier circuitry.
+
+\subsection{Umbilical}
+
+TODO: Specify the umbilical connector pinout and reference its layout position.
+
+\section{Functional Description}
+
+\subsection{MCU}
+
+The OBC uses the STM32G431RBT6 from STMicroelectronics as its main processing
+device. It contains a 32-bit Arm Cortex-M4 processor with floating-point
+support, 128~kB of internal Flash memory, and 32~kB of SRAM in an LQFP-64
+package \cite{stm32g431-datasheet}.
+
+The MCU runs the onboard firmware, monitors system signals, controls
+board-level functions, and communicates with the other spacecraft subsystems.
+The schematic assigns SPI, I\textsuperscript{2}C, UART, CAN, ADC, timer, and
+GPIO connections to the MCU \cite{obc-schematic}. Detailed operation of the
+connected peripherals is covered in their respective sections rather than
+repeated here.
+
+Internal meeting notes indicate that compatibility with the Zephyr
+Real-Time Operating System was an important consideration during MCU
+selection. The notes also show that the team preferred an STM32 device and
+wanted the simplest MCU that could still meet the firmware and interface
+requirements \cite{fdir-notes}. The complete MCU trade study was not located,
+so the final selection reasoning should still be confirmed with the original
+design lead.
+
+\subsubsection{Power and Analog Reference}
+
+The MCU is powered from the board's regulated 3.3~V rail. Its digital supply
+pins are locally decoupled using four \(0.1\,\mu\mathrm{F}\) capacitors,
+together with \(1\,\mu\mathrm{F}\) and \(4.7\,\mu\mathrm{F}\) capacitors
+\cite{obc-schematic}. The smaller capacitors provide local high-frequency
+decoupling, while the larger capacitors provide additional nearby charge
+storage.
+
+The analog supply, VDDA, is connected to the 3.3~V rail through a ferrite bead
+and has separate local decoupling capacitors. This helps limit the amount of
+digital switching noise reaching the MCU's analog circuitry
+\cite{obc-schematic}.
+
+VREF+ is supplied by a dedicated 3.0~V reference circuit based on an ATL431
+programmable shunt reference. The reference is separately filtered before
+reaching the MCU, providing a defined voltage reference for analog-to-digital
+conversion \cite{obc-schematic}.
+
+The VBAT pin is connected to the same regulated 3.3~V rail in this board
+revision rather than to a separate backup battery supply
+\cite{obc-schematic}.
+
+\subsubsection{Reset and Fault Recovery}
+
+The NRST pin is normally held high using a 10~k\(\Omega\) pull-up resistor. A
+10~nF capacitor between NRST and ground forms an RC network that helps filter
+brief disturbances on the reset line \cite{obc-schematic}. A manual reset
+connection is also included for development and board testing.
+
+The reset network can additionally be controlled by the debug interface and an
+external STWD100 watchdog supervisor. If the MCU stops providing the expected
+watchdog signal, the external watchdog can assert the reset line and restart
+the MCU \cite{obc-schematic}.
+
+The STM32G431 also contains independent and window watchdog peripherals
+\cite{stm32g431-datasheet}. The external watchdog therefore provides an
+additional recovery path that is independent of the MCU's internal firmware
+execution.
+
+\subsubsection{Programming and Debugging}
+
+Firmware programming and hardware-level debugging are provided through the
+Serial Wire Debug interface. SWDIO and SWCLK are routed from the MCU to the
+OBC debug interface, allowing an external debugger to program internal Flash,
+inspect memory and registers, pause execution, and step through firmware
+\cite{stm32g431-datasheet,obc-schematic}.
+
+The design also exposes SWO for optional trace output and includes a reset
+connection that allows the debugger to issue a hardware reset. A separate UART
+connection is routed to the Ground Support Equipment interface for
+firmware-controlled communication during board bring-up, testing, and
+integration \cite{obc-schematic}.
+
+\subsubsection{External Interfaces}
+
+The MCU communicates with the rest of the OBC through SPI,
+I\textsuperscript{2}C, UART, CAN, GPIO, timer, and analog connections. These
+include interfaces to the EPS, ADCS, external Flash memory, thermal-monitoring
+circuitry, GNSS signals, spacecraft bus, and debug circuitry
+\cite{obc-schematic}.
+
+Only the MCU-side purpose and allocation of these interfaces are covered here.
+Their detailed implementation is documented in the corresponding subsystem
+sections.
+
+\subsection{External Clocks}
+
+The MCU is provided with both high-speed and low-speed external clock sources.
+
+A 24~MHz crystal is connected between OSC\_IN and OSC\_OUT, with two 5.1~pF
+load capacitors \cite{obc-schematic}. This provides the High-Speed External
+clock source. The STM32G431 supports HSE crystals between 4~MHz and 48~MHz, so
+the selected 24~MHz crystal is within the supported range
+\cite{stm32g431-datasheet}.
+
+A separate 32.768~kHz crystal is connected between OSC32\_IN and OSC32\_OUT,
+with two 3.9~pF load capacitors \cite{obc-schematic}. This provides the
+Low-Speed External clock source and can be used for accurate low-frequency
+timing, including operation of the integrated real-time clock
+\cite{stm32g431-datasheet}.
+
+The crystal, oscillator pins, and load capacitors form an oscillator feedback
+circuit. The crystal determines the frequency, while the amplifier inside the
+MCU sustains the oscillation through OSC\_IN and OSC\_OUT.
+STMicroelectronics recommends placing the crystal and load capacitors close to
+the oscillator pins to reduce distortion and improve startup behaviour
+\cite{stm32g431-datasheet}.
+
+\subsection{External Flash Memory}
+
+The OBC includes an SST26VF064B external serial Flash memory device. It
+provides 64~Mbit, or 8~MB, of additional non-volatile storage beyond the
+MCU's internal Flash memory \cite{sst26vf064b-datasheet}.
+
+The Flash memory is connected to the MCU through SPI1 using chip select,
+serial clock, MOSI, and MISO signals \cite{obc-schematic}. SPI provides a
+relatively simple interface for transferring stored data without requiring a
+parallel address or data bus.
+
+The intended contents of the external Flash were not identified in the
+available design notes. This section therefore does not assume whether the
+memory was intended for telemetry, firmware images, logs, configuration data,
+or another application.
+
+\subsection{RTC}
+
+Timekeeping is provided by the real-time clock peripheral integrated within
+the STM32G431RBT6 rather than by a separate external RTC device
+\cite{stm32g431-datasheet}.
+
+The external 32.768~kHz crystal connected to OSC32\_IN and OSC32\_OUT can
+provide the low-frequency clock used by the RTC
+\cite{stm32g431-datasheet,obc-schematic}. The use of this crystal provides a
+more accurate low-frequency reference than relying only on the MCU's internal
+low-speed RC oscillator.
+
+The MCU's VBAT pin supplies the RTC and backup domain when a separate backup
+source is available \cite{stm32g431-datasheet}. In this board revision, VBAT
+is tied to the same regulated 3.3~V rail as the rest of the MCU
+\cite{obc-schematic}. The design therefore does not include an independent
+battery-backed supply that would maintain the RTC after the board's 3.3~V rail
+is removed.
+
+The exact use of the RTC within the OBC firmware was not confirmed in the
+available documentation.
+
+\section{Mechanical and Layout}
+
+TODO: Add an isometric view of the board showing the maximum component height,
+board dimensions, and drill-hole locations.
+
+TODO: Add a description of the polygon pours used for power distribution and
+thermal management.
+
+\section{Manufacturing}
+
+\subsection{Bill of Materials}
+
+TODO: Add or reference the board Bill of Materials.
+
+\subsection{Test Points}
+
+TODO: Describe the available test points within the design and cross-reference
+the corresponding functional subsections.
+
+\section{Bring-Up Log}
+
+TODO: Specify the tests that have been conducted and reference the corresponding
+Notion documentation.
+
+\begin{thebibliography}{9}
+  
+  \bibitem{stm32g431-datasheet}
+  STMicroelectronics,
+  ``STM32G431x6, STM32G431x8, STM32G431xB: Arm Cortex-M4 32-bit
+  MCU+FPU, 170 MHz/213 DMIPS, up to 128 KB Flash, 32 KB SRAM,
+  rich analog, math accelerator,''
+  Datasheet DS12589, Rev. 6, Oct. 2021.
+  
+  \bibitem{obc-schematic}
+  University of Toronto Aerospace Team, Space Systems Division,
+  ``OBC v1.2 schematic: STM32G431 MCU and associated hierarchical
+  sheets,''
+  internal Altium design files, unpublished, 2026.
+  
+  \bibitem{fdir-notes}
+  University of Toronto Aerospace Team, Space Systems Division,
+  ``FDIR Sync with EPS and Firmware,''
+  internal meeting notes, unpublished, date not identified.
+  
+  \bibitem{sst26vf064b-datasheet}
+  Microchip Technology Inc.,
+  ``SST26VF064B/SST26VF064BA 2.5 V/3.0 V 64-Mbit Serial Quad
+  I/O Flash Memory,''
+  Datasheet DS20005119, Rev. G.
+  
+\end{thebibliography}
+
+\end{document}
