@@ -1,0 +1,50 @@
+﻿Name,Embedded Memory Type,MCU type,Reasoning,Satellite Interface,Source
+NOVI Space Gen 2 OBC,FRAM,Vorago ARM Cortex M4,,PC104,NASA SotA p234
+EnduroSat OBC,Flash,"ARM Cortex M4/M7 ",,PC104,NASA SotA p233
+"Sirius
+OBC &
+TCM",NAND Flash,32-bit LEON3FT (Fault-Tolerant) SPARC V8,,SpaceWireRS422 / RS485 UART / GPIO,"NASA SotA p231, AAC_DataSheet_Sirius-OBC"
+"NANOhp
+m-obc",DDR3,32-bit RISC-V core / PolarFire,,PC104,NASA SotA p236
+"Athenna Onboard Computer (albertasat, University of Alberta)",Flash,"  • Texas Instruments
+  • TMS570LC4357
+  • based on ARM Cortex R5F 
+","  • many communication interface
+  • general purpose input/outputs
+  • features ideal for satellite OBC application 
+  • features may be referring to: 
+  • radiation & space reliability(radiation hardened, SEL immune 48 MeV at 125°C, Radiation Lot Acceptance Tested 30krad)
+  •  high computational performance (two CPU core and compare results, fault is flagged when output differs, 300MHz CPU clock, 1.66DMIPS/MHz)",,"Team site: https://albertasat.ca/open-source-designs/athena/
+
+Data sheet:
+https://www.ti.com/lit/an/spna249/spna249.pdf?ts=1777734751387
+
+https://www.ti.com/lit/rr/slvk166/slvk166.pdf?ts=1777796985780#:~:text=ABSTRACT,An%20extended%20product%20life%20cycle"
+Orcasat (University of Victoria),Flash,"TI
+• https://www.ti.com/lit/ds/symlink/tms570ls0714.pdf?ts=1662527711247
+  • Dual ARM Cortex-R4F cores","  • operates in lock step
+  • ECC integrated flash & RAM banks
+  • Radiation-tested up to 6 krad
+  • Core clock 80MHz",,Team site:https://www.orcasat.ca/design
+LORIS (Dalhousie University),Flash,"  • Single core NXP/Freescale i.MX6DL
+  • Featuring ARM Cortex-A9 architecture?","  • Low Profile, Power Efficient System-on Chip (Soc) Single Board Computer, With Fast
+Processing Functions And Multi Purpose Input / Output
+• 4GB eMMC Flash Storage
+• Temperature range: -40° to 85°C
+• 800 MHz operational frequency
+• 256MB(32 Bit) DDR3 RAM","USB 2.0, SPI, I2C, PWM, UART, GPIO, ADC","Team
+https://cdn.dal.ca/content/dam/dalhousie/images/engineering/CapstoneConference/2020-projects/2020_ECED01_03.pdf
+
+other note source: https://www.nxp.com/products/i.MX6DL"
+NEUDOSE (McMaster University),,"  • Primary OBC based on AVR32 
+  • Secondary absed on Xilinz Zynq-7000 System-on-Chip.","  • Primary: COTS option chosen for high TRL thereby reducing mission risk
+  • Secondary: designed with radiant tolerance in mind, using radiation and non-radiation hardened components",,"Team written page: https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=4664&context=smallsat#:~:text=The%20dual%20system%20was%20chosen,secondary%20payload%20to%20the%20mission.
+"
+RADSAT-SK (University of Saskatchewan),SDRAM,"  • uses MCPU ARM926EJ-S (indicated in github code)
+","  potential reasons:
+• can use ISISpace satellite-subsystems libraries
+  • Contains MMU unit
+  • designed to interface with External SDRAM",,"Github page(shows mcpu): https://github.com/USST-RADSAT-SK/software-and-command/blob/alpha/radsat-sk/.cproject
+
+"
+,,,,,
