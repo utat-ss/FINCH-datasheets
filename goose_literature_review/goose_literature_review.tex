@@ -9,7 +9,7 @@
 \usepackage{csvsimple-l3}
 \usepackage{pdflscape}
 
-\title{Electrical BUS Subsystem Literature Review}
+\title{Electrical BUS Literature Review}
 \author{UTAT Space Systems}
 \date{July 2026}
 \revision{Revision 1}
@@ -45,8 +45,20 @@ categories [subjective].
 In terms of sources, two major categories are surveyed:
 \begin{itemize}
   \item Commercial OBCs discussed in NASA's Small-Sat State of the Art reports from 2022 to 2026 (\cite[pp.~215--226]{nasa_soa_2022}, \cite[pp.~225--237]{nasa_soa_2023}, \cite[pp.~227--239]{nasa_soa_2024}, \cite[pp.~241--253]{nasa_soa_2026}), with trends also observed.
-  \item OBCs built by design teams around Canada and beyond.
+  \item OBCs built by academic design teams around Canada and beyond (considered
+        designs listed in Appendix~\ref{sec:appendix_a})
 \end{itemize}
+
+\section{Document Revisions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{|l|l|l|X|}
+\hline
+\textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Description} \\ \hline
+0.1 & July 2026 & Boris & Initial \\ \hline
+\end{tabularx}
+\end{center}
 
 \onecolumn
 
@@ -70,88 +82,88 @@ are generally introduced when the OBC must also support image processing,
 autonomy, high-rate payload data, or machine-learning workloads.
 
 \begin{longtable}{|p{2.8cm}|p{4.6cm}|p{5.3cm}|p{3.8cm}|}
-\caption{Candidate OBC control-unit architectures} \label{tab:control_architectures} \\ \hline
-\textbf{Architecture} &
-\textbf{Characteristics} &
-\textbf{NASA SOA Examples} &
-\textbf{Academic Examples} \\ \hline
-\endfirsthead
-\caption[]{Candidate OBC control-unit architectures (Continued)} \\ \hline
-\textbf{Architecture} &
-\textbf{Characteristics} &
-\textbf{NASA SOA Examples} &
-\textbf{Academic Examples} \\ \hline
-\endhead
-\hline
-\endfoot
+  \caption{Candidate OBC control-unit architectures} \label{tab:control_architectures} \\ \hline
+  \textbf{Architecture}                                     &
+  \textbf{Characteristics}                                  &
+  \textbf{NASA SOA Examples}                                &
+  \textbf{Academic Examples}                                                           \\ \hline
+  \endfirsthead
+  \caption[]{Candidate OBC control-unit architectures (Continued)}                     \\ \hline
+  \textbf{Architecture}                                     &
+  \textbf{Characteristics}                                  &
+  \textbf{NASA SOA Examples}                                &
+  \textbf{Academic Examples}                                                           \\ \hline
+  \endhead
+  \hline
+  \endfoot
 
-Single MCU or processor &
-One device performs command execution, telemetry, timekeeping, fault
-management, and subsystem control. Lowest complexity and generally lowest
-power. &
-EnduroSat OBC, ARM Cortex-M7
-\cite[p.~229]{nasa_soa_2023};
-AAC Clyde Space Kryten-M3, Cortex-M3
-\cite[p.~228]{nasa_soa_2023}. &
-STM32L4 PC/104 OBC; Athena TMS570; ORCASat TMS570
-\cite{stm32l4_vst104_pub,athena_obc_site,orcasat_obc_site}. \\ \hline
+  Single MCU or processor                                   &
+  One device performs command execution, telemetry, timekeeping, fault
+  management, and subsystem control. Lowest complexity and generally lowest
+  power.                                                    &
+  EnduroSat OBC, ARM Cortex-M7
+  \cite[p.~229]{nasa_soa_2023};
+  AAC Clyde Space Kryten-M3, Cortex-M3
+  \cite[p.~228]{nasa_soa_2023}.                             &
+  STM32L4 PC/104 OBC; Athena TMS570; ORCASat TMS570
+  \cite{stm32l4_vst104_pub,athena_obc_site,orcasat_obc_site}.                          \\ \hline
 
-Multicore SoC &
-Multiple cores share one device and memory system. Provides additional
-performance or lockstep capability, but does not remove the SoC as a
-single point of failure. &
-Argotec FERMI, dual-core LEON3FT
-\cite[p.~229]{nasa_soa_2023};
-SPiN MA61C, dual-core GR712RC
-\cite[p.~236]{nasa_soa_2024};
-Xiphos Q7S, dual-core Cortex-A9
-\cite[p.~238]{nasa_soa_2024}. &
-Athena and ORCASat use lockstep-capable ARM safety microcontrollers
-\cite{athena_obc_ti_prod,orcasat_obc_ds}. \\ \hline
+  Multicore SoC                                             &
+  Multiple cores share one device and memory system. Provides additional
+  performance or lockstep capability, but does not remove the SoC as a
+  single point of failure.                                  &
+  Argotec FERMI, dual-core LEON3FT
+  \cite[p.~229]{nasa_soa_2023};
+  SPiN MA61C, dual-core GR712RC
+  \cite[p.~236]{nasa_soa_2024};
+  Xiphos Q7S, dual-core Cortex-A9
+  \cite[p.~238]{nasa_soa_2024}.                             &
+  Athena and ORCASat use lockstep-capable ARM safety microcontrollers
+  \cite{athena_obc_ti_prod,orcasat_obc_ds}.                                            \\ \hline
 
-Dual redundant processors &
-Two processor devices provide cold, warm, or active redundancy. One processor
-may take control following a fault in the primary device. &
-Andes OBC, two Cortex-M7 processors with full cold redundancy
-\cite[p.~230]{nasa_soa_2026};
-Bradford Binary OBC, dual Cortex-R5 with internal cold redundancy
-\cite[p.~229]{nasa_soa_2023};
-Bradford Stellar OBC, dual PolarFire SoCs with internal cold redundancy
-\cite[p.~230]{nasa_soa_2026}. &
-No directly equivalent two-device redundant architecture was identified in
-the academic survey. \\ \hline
+  Dual redundant processors                                 &
+  Two processor devices provide cold, warm, or active redundancy. One processor
+  may take control following a fault in the primary device. &
+  Andes OBC, two Cortex-M7 processors with full cold redundancy
+  \cite[p.~230]{nasa_soa_2026};
+  Bradford Binary OBC, dual Cortex-R5 with internal cold redundancy
+  \cite[p.~229]{nasa_soa_2023};
+  Bradford Stellar OBC, dual PolarFire SoCs with internal cold redundancy
+  \cite[p.~230]{nasa_soa_2026}.                             &
+  No directly equivalent two-device redundant architecture was identified in
+  the academic survey.                                                                 \\ \hline
 
-Controller plus FPGA or DPU &
-A low-power controller performs critical spacecraft control while an FPGA or
-higher-performance processor handles payload data or acceleration. The
-secondary unit may be powered down when unused. &
-KP Labs Antelope, RM57 OBC plus Zynq UltraScale+ DPU
-\cite[p.~230]{nasa_soa_2023};
-NOVI Gen~2, Vorago MCU plus Versal AI Edge SoC
-\cite[p.~232]{nasa_soa_2026}. &
-NEUDOSE, primary AVR32 plus secondary Xilinx Zynq-7000
-\cite{neudose_obc_pub}. \\ \hline
+  Controller plus FPGA or DPU                               &
+  A low-power controller performs critical spacecraft control while an FPGA or
+  higher-performance processor handles payload data or acceleration. The
+  secondary unit may be powered down when unused.           &
+  KP Labs Antelope, RM57 OBC plus Zynq UltraScale+ DPU
+  \cite[p.~230]{nasa_soa_2023};
+  NOVI Gen~2, Vorago MCU plus Versal AI Edge SoC
+  \cite[p.~232]{nasa_soa_2026}.                             &
+  NEUDOSE, primary AVR32 plus secondary Xilinx Zynq-7000
+  \cite{neudose_obc_pub}.                                                              \\ \hline
 
-FPGA-centric &
-Control or processing is implemented using programmable logic and,
-optionally, a soft processor. Suitable for deterministic parallel interfaces
-and high-rate data paths, but more difficult to develop as a general-purpose
-OBC. &
-LASP Generic SmallSat FPGA Board, Kintex-7
-\cite[p.~230]{nasa_soa_2023};
-KP Labs Lion, Kintex UltraScale
-\cite[p.~230]{nasa_soa_2023}. &
-No FPGA-only primary OBC was identified in the academic survey. \\ \hline
+  FPGA-centric                                              &
+  Control or processing is implemented using programmable logic and,
+  optionally, a soft processor. Suitable for deterministic parallel interfaces
+  and high-rate data paths, but more difficult to develop as a general-purpose
+  OBC.                                                      &
+  LASP Generic SmallSat FPGA Board, Kintex-7
+  \cite[p.~230]{nasa_soa_2023};
+  KP Labs Lion, Kintex UltraScale
+  \cite[p.~230]{nasa_soa_2023}.                             &
+  No FPGA-only primary OBC was identified in the academic survey.                      \\ \hline
 
-Distributed controllers &
-Subsystem-local processors control the EPS, ADCS, communications, or payload
-and exchange data with a coordinating OBC. This improves fault containment but
-increases network and software complexity. &
-NASA identifies federated, distributed, heterogeneous, and mixed-criticality
-avionics as viable SmallSat architectures
-\cite[p.~225]{nasa_soa_2023}
-\cite[p.~221--222]{nasa_soa_2026}. &
-Individual subsystem controllers used alongside the primary academic OBC. \\ \hline
+  Distributed controllers                                   &
+  Subsystem-local processors control the EPS, ADCS, communications, or payload
+  and exchange data with a coordinating OBC. This improves fault containment but
+  increases network and software complexity.                &
+  NASA identifies federated, distributed, heterogeneous, and mixed-criticality
+  avionics as viable SmallSat architectures
+  \cite[p.~225]{nasa_soa_2023}
+  \cite[p.~221--222]{nasa_soa_2026}.                        &
+  Individual subsystem controllers used alongside the primary academic OBC.            \\ \hline
 \end{longtable}
 
 All architectures will be considered during preliminary design; however, the
@@ -162,9 +174,340 @@ determinism, software complexity, and flight heritage. An FPGA or secondary
 processor may be added later if payload-processing requirements cannot be met
 by the primary MCU.
 
-\section{Protocols}
+\section{Protocols and Interconnect}
+
+This section will summarize the survey or protocols across the NASA's SOAs as
+well as Canadian design teams' CubeSats in
+Table~\ref{tab:protocol_design_space}, as well as provide an overview of
+interconnect architectures in Table~\ref{tab:interconnect_architectures}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{5.0cm}|p{5.2cm}|}
+  \caption{Protocol and electrical-interface design space} \label{tab:protocol_design_space} \\ \hline
+  \textbf{Protocol}                                                 &
+  \textbf{Representative Rate}                                      &
+  \textbf{Survey Examples}                                          &
+  \textbf{Primary Considerations}                                                            \\ \hline
+  \endfirsthead
+  \caption[]{Protocol and electrical-interface design space (Continued)}                     \\ \hline
+  \textbf{Protocol}                                                 &
+  \textbf{Representative Rate}                                      &
+  \textbf{Survey Examples}                                          &
+  \textbf{Primary Considerations}                                                            \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  I\textsuperscript{2}C                                             &
+  100~kbit/s--3.4~Mbit/s                                            &
+  LORIS OBC \cite{loris_obc_pub}; identified as a common synchronous interface
+  in all four NASA surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  Low pin count and broad peripheral support; limited distance and bandwidth;
+  shared-bus faults may block all devices.                                                   \\ \hline
+
+  SPI                                                               &
+  Application-dependent; commonly 1--50+~Mbit/s                     &
+  LORIS OBC \cite{loris_obc_pub}; NASA interface surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  Deterministic and comparatively fast; requires separate chip-select signals
+  and provides no standardized addressing or error handling.                                 \\ \hline
+
+  UART / RS-422 / RS-485                                            &
+  Typically kbit/s to approximately 10~Mbit/s                       &
+  LORIS uses UART \cite{loris_obc_pub}; differential serial interfaces are
+  listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  Simple implementation. RS-422/485 provides greater noise immunity and cable
+  length than logic-level UART; termination and driver control are required.
+  \\ \hline
+
+  CAN / CAN FD                                                      &
+  1~Mbit/s Classical CAN; commonly up to 8~Mbit/s CAN-FD data phase &
+  STM32L4 PC/104 OBC \cite{stm32l4_vst104_pub}; CAN is listed as a common
+  spacecraft fieldbus
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~224--225]{nasa_soa_2026}.                               &
+  Differential multidrop operation, arbitration, acknowledgements, and error
+  confinement make it suitable for EPS, ADCS, RF, and housekeeping traffic.
+  Payload throughput is limited.                                                             \\ \hline
+
+  USB 2.0                                                           &
+  Up to 480~Mbit/s                                                  &
+  LORIS OBC \cite{loris_obc_pub}.                                   &
+  High COTS compatibility and throughput, but host/device roles, connector
+  retention, software complexity, and limited spacecraft-bus heritage must be
+  considered.                                                                                \\ \hline
+
+  Ethernet                                                          &
+  100~Mbit/s--1~Gbit/s commonly                                     &
+  Listed as a network interface in each NASA survey
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  High throughput and broad software support; requires switching or routing and
+  may require additional measures for deterministic real-time operation.
+  \\ \hline
+
+  SpaceWire / SpaceFibre                                            &
+  SpaceWire: typically 10--400~Mbit/s;
+  SpaceFibre: multi-Gbit/s                                          &
+  SpaceWire is listed in the 2022--2024 surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024};
+  SpaceWire and SpaceFibre are included together in 2026
+  \cite[p.~225]{nasa_soa_2026}.                                     &
+  Space-qualified point-to-point networking with routing and fault-management
+  support. Requires more specialized hardware and software than CAN or UART.
+  \\ \hline
+
+  SerDes / MGT                                                      &
+  Gigabit-per-second class; XAUI provides 10~Gbit/s aggregate       &
+  Identified by NASA as high-rate mission-data interfaces
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                     &
+  Suitable for FPGA, payload, mass-memory, and radio data paths. Requires
+  controlled-impedance routing, suitable connectors, reference clocks, and
+  signal-integrity analysis.                                                                 \\ \hline
+
+  GPIO / PWM /
+  ADC / DAC                                                         &
+  Application-dependent                                             &
+  LORIS provides GPIO, PWM, and ADC \cite{loris_obc_pub}; discrete and analog
+  interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                     &
+  Appropriate for enables, inhibits, deployment signals, and analog telemetry;
+  creates dedicated wiring and provides little inherent fault detection.
+  \\ \hline
+
+  JTAG / ISP / ICSP                                                 &
+  Not a mission-data interface                                      &
+  Debug and programming interfaces are listed in the NASA surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                     &
+  Required for programming and board-level debugging; access should be isolated
+  or protected during flight.                                                                \\ \hline
+\end{longtable}
+
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{4.5cm}|p{4.1cm}|p{4.0cm}|}
+  \caption{Candidate interconnect architectures} \label{tab:interconnect_architectures} \\ \hline
+  \textbf{Architecture}                                                  &
+  \textbf{Connection Pattern}                                            &
+  \textbf{Advantages}                                                    &
+  \textbf{Limitations}                                                                  \\ \hline
+  \endfirsthead
+  \caption[]{Candidate interconnect architectures (Continued)}                          \\ \hline
+  \textbf{Architecture}                                                  &
+  \textbf{Connection Pattern}                                            &
+  \textbf{Advantages}                                                    &
+  \textbf{Limitations}                                                                  \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Unified stack                                                          &
+  OBC, EPS, RF, ADCS, and payload share a PC/104-style stack-through connector
+  carrying power and common buses. The STM32L4 academic OBC uses this format
+  \cite{stm32l4_vst104_pub}. NASA discusses PC/104 and stackable mezzanines in
+  \cite[p.~210]{nasa_soa_2022},
+  \cite[pp.~226--227]{nasa_soa_2023},
+  \cite[pp.~229--230]{nasa_soa_2024}, and
+  \cite[p.~222]{nasa_soa_2026}.                                          &
+  Compact, modular, and requires little harnessing.                      &
+  Shared pinout constrains all boards; board order and connector bandwidth may
+  become limiting.                                                                      \\ \hline
+
+  Backplane                                                              &
+  Subsystem cards plug into a shared CompactPCI or SpaceVPX backplane
+  \cite[p.~210]{nasa_soa_2022}
+  \cite[p.~226]{nasa_soa_2023}
+  \cite[p.~229]{nasa_soa_2024}
+  \cite[p.~222]{nasa_soa_2026}.                                          &
+  Rigid mechanical support, modular replacement, and high-speed routing. &
+  Higher mass, volume, connector cost, and chassis complexity.                          \\ \hline
+
+  Centralized point-to-point                                             &
+  Each subsystem has a dedicated connection to the OBC; all commands and data
+  pass through the OBC. NASA identifies direct point-to-point and centralized
+  architectures in
+  \cite[p.~207]{nasa_soa_2022} and
+  \cite[p.~226]{nasa_soa_2024}.                                          &
+  Simple command authority and strong link-level isolation.              &
+  High connector count; OBC becomes a bandwidth bottleneck and single point of
+  failure.                                                                              \\ \hline
+
+  Shared peer network                                                    &
+  OBC, EPS, RF, ADCS, and payload controllers communicate as peers over CAN,
+  Ethernet, or SpaceWire.                                                &
+  Reduces wiring, allows direct subsystem communication, and supports
+  distributed control.                                                   &
+  Requires addressing, arbitration, synchronization, and network-level fault
+  management.                                                                           \\ \hline
+
+  Payload pass-through                                                   &
+  The OBC controls the payload, while high-rate data travels directly between
+  the payload, mass memory, FPGA, and RF subsystem.                      &
+  Avoids loading the housekeeping bus or copying all payload data through the
+  primary MCU.                                                           &
+  Requires separate control and data paths, flow control, buffering, and an OBC
+  mechanism to isolate or reset the data path.                                          \\ \hline
+
+  Hybrid dual-plane                                                      &
+  A low-speed CAN or stack bus carries commands and housekeeping data, while
+  dedicated Ethernet, SpaceWire, or SerDes links carry payload data. NASA
+  describes this mixed topology in
+  \cite[pp.~222--223]{nasa_soa_2026}.                                    &
+  Combines a robust housekeeping network with scalable payload throughput and
+  fault isolation.                                                       &
+  Requires two interface classes and clear ownership of commands, telemetry,
+  and high-rate data.                                                                   \\ \hline
+\end{longtable}
+
+For the mission, the interconnect as well as the protocol bouquet selection will
+want to target higher throughput interfaces for RF and PAY subsystems, and thus
+will generally be dictated by them. In the spirit of a generic design, selecting
+a highet-speed interface is favoured, yet this might collide with the
+interconnect architecture selection since certain interfaces require specific
+connections that may not for example berouted through PC104 due to signal
+integrity requirements (e.g. SpaceFibre). The stack-up requirements and/or
+constraints might also be driven by Mechanical subsystem.
 
 \section{Periptherals}
+
+This section reviews the common peripherals that are found OBCs surveyed by
+NASA's SOAs, as well as on OBCs designed by Canadian academic design teams, as
+summarized in Table~\ref{tab:obc_peripherals}. General considerations related to periptherals
+revolve around external vs internal periptherals since modern day SoCs contain
+many of the necessary periptherals on the same chip.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{6.2cm}|p{6.0cm}|}
+  \caption{Common OBC peripheral classes} \label{tab:obc_peripherals}          \\ \hline
+  \textbf{Peripheral Class}                                                  &
+  \textbf{Examples}                                                          &
+  \textbf{Primary Considerations}                                              \\ \hline
+  \endfirsthead
+  \caption[]{Common OBC peripheral classes (Continued)}                        \\ \hline
+  \textbf{Peripheral Class}                                                  &
+  \textbf{Examples}                                                          &
+  \textbf{Primary Considerations}                                              \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Volatile working memory                                                    &
+  SRAM and DRAM are surveyed by NASA
+  \cite[p.~218]{nasa_soa_2022}
+  \cite[p.~234]{nasa_soa_2023}
+  \cite[p.~239]{nasa_soa_2024}
+  \cite[p.~223]{nasa_soa_2026}.
+  LORIS uses 256~MB DDR3, RADSAT-SK uses external SDRAM, and ORCASat
+  uses ECC-protected RAM
+  \cite{loris_obc_pub,radsat_sk_obc_git,orcasat_obc_ds}.                     &
+  Internal memory reduces component count and PCB complexity; external memory
+  provides greater capacity but introduces additional power, routing, timing,
+  and radiation-mitigation requirements.                                       \\ \hline
+
+  Non-volatile program and mass memory                                       &
+  NASA surveys Flash, MRAM, FRAM, NAND, and eMMC technologies. The C3S OBC uses
+  MRAM with eMMC mass storage
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}; the Andes OBC provides redundant MRAM and NAND
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}.
+  LORIS uses 4~GB eMMC, while Athena and ORCASat use Flash
+  \cite{loris_obc_pub,athena_obc_site,orcasat_obc_site}.                     &
+  Selection depends on capacity, write endurance, retention, access speed, boot
+  reliability, and susceptibility to radiation-induced corruption. Redundant
+  boot images and error detection should be considered.                        \\ \hline
+
+  Watchdog, reset, and supervisor circuitry                                  &
+  The C3S OBC uses a multi-level watchdog
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}; the Aerospacelab OBC includes a
+  radiation-hardened supervisor MCU and watchdog
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~229]{nasa_soa_2026}.
+  NASA discusses watchdogs and power cycling as fault-mitigation mechanisms
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~220--222]{nasa_soa_2026}.                                        &
+  An external watchdog is preferable for recovery from processor lock-up.
+  Consider independent clocks, reset coverage, timeout configuration,
+  communications watchdogs, and selective power cycling.                       \\ \hline
+
+  Timers and timekeeping                                                     &
+  NASA identifies PLLs, capture/compare units, and time-processing units as
+  common OBC peripherals
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.
+  Timers are integrated within the STM32L4, TMS570, and i.MX6DL devices used by
+  the surveyed academic OBCs
+  \cite{stm32l4_vst104_pub,athena_obc_ti_prod,orcasat_obc_ds,loris_obc_nxp}. &
+  Used for scheduling, timestamping, watchdog servicing, and waveform
+  generation. Clock drift, oscillator redundancy, synchronization, and
+  operation during processor resets must be considered.                        \\ \hline
+
+  Analog and discrete I/O                                                    &
+  NASA lists GPIO, ADC, and DAC peripherals in each avionics survey
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~224--225]{nasa_soa_2026}.
+  LORIS exposes GPIO, PWM, and ADC interfaces
+  \cite{loris_obc_pub,loris_obc_nxp}.                                        &
+  Used for analog telemetry, enables, inhibits, deployment signals, and simple
+  sensors. Consider voltage compatibility, input protection, ADC accuracy,
+  safe reset states, and whether signals require isolation or redundancy.
+  \\ \hline
+
+  Debug and programming interfaces                                           &
+  NASA lists JTAG, ISP, ICSP, BDM, BITP, and DB9 interfaces
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                              &
+  Required for programming, boundary scan, manufacturing tests, and debugging.
+  Flight hardware should provide controlled physical access and prevent
+  unintended entry into debug or programming modes.                            \\ \hline
+
+  Optional integrated navigation peripherals                                 &
+  The EnduroSat OBC is available with integrated GNSS
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~230]{nasa_soa_2026}.                                              &
+  Integration can reduce board count and harnessing, but may couple the OBC
+  lifecycle to a specific receiver and complicate antenna placement, RF
+  isolation, replacement, and independent fault recovery.                      \\ \hline
+\end{longtable}
+
+[TODO: survey each class of peripherals in more detail]
 
 \section{COTS (Commercial Off the Shelf) Design Alternatives}
 
@@ -213,7 +556,7 @@ therefore drawn primarily from the 2023, 2024, and 2026 editions
   \textbf{Example Designs}
   \\ \hline
   \endfirsthead
-  \caption[]{OBC power-consumption trends and reported operating states (Continued)} \\ \hline
+  \caption[]{OBC power-consumption trends and reported operating states (Continued)}            \\ \hline
   \textbf{Platform Complexity}
    &
   \textbf{Reported Power Profile}
@@ -356,7 +699,7 @@ project design boundary rather than the full commercial-hardware envelope, which
 extends from approximately 0.05~W for low-power microcontroller boards to 130~W
 peak for high-performance payload computers.
 
-[TODO: peak loads and durations]
+  [TODO: peak loads and durations]
 
 \subsection{Dimentions}
 
@@ -364,12 +707,29 @@ peak for high-performance payload computers.
 
 \subsection{Radiation tolerance}
 
+\section{Conclusion}
+
+This report outlined the state-of-the-art OBC review from both internal design
+stadpoint through the Design Space section as well as system integration
+standpoint through System Architecture section. Internal design is broken into
+selection of control unit, protocol set and interconnect topology, as well as
+periptheral array. Each of these compoenents have a wide selection of
+compoenetns and designs which will need to be researched further and used as
+part of trades once requirements are established. Further research and
+collaboration with other subsystems is also required to guide the internal
+design decisions for this subsystem.
+
 \clearpage
 \begin{landscape}
+  \phantomsection
   \section{Appendix A: Academic OBCs}
+  \makeatletter
+  \def\@currentlabel{A}
+  \makeatother
+  \label{sec:appendix_a}
 
   \begin{longtable}{|p{2.6cm}|p{2.0cm}|p{3.8cm}|p{3.8cm}|p{1.4cm}|p{6.4cm}|p{1.0cm}|}
-    \hline \textbf{Name}                                                                                                                                                                                                                                                              & \textbf{Manufacturer} & \textbf{MCU} & \textbf{Protocols} & \textbf{Standard} & \textbf{Notes} & \textbf{Ref} \\\hline \endhead
+    \hline \textbf{Name}                                                                                                                                                                                                                                                              & \textbf{Team} & \textbf{MCU} & \textbf{Protocols} & \textbf{Standard} & \textbf{Notes} & \textbf{Ref} \\\hline \endhead
     \hline
     STM32L4 PC/104 academic OBC                                                                                                                                                                                                                                                       &
     VST104 thesis design                                                                                                                                                                                                                                                              &
@@ -377,48 +737,53 @@ peak for high-performance payload computers.
     CAN                                                                                                                                                                                                                                                                               &
     PC104                                                                                                                                                                                                                                                                             &
     pc 104 cubesat design.                                                                                                                                                                                                                                                            &
-    \cite{stm32l4_vst104_pub}                                                                                                                                                                                                                                                                                                                                                                         \\ \hline
+    \cite{stm32l4_vst104_pub}                                                                                                                                                                                                                                                                                                                                                                 \\ \hline
     Athena OBC                                                                                                                                                                                                                                                                        &
     University of Alberta (Albertasat)                                                                                                                                                                                                                                                &
     TI TMS570LC4357 (ARM Cortex R5F)                                                                                                                                                                                                                                                  &
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Features ideal for satellite OBC application, including radiation \& space reliability (rad-hard, SEL immune 48 MeV at 125\textdegree{}C, LAT 30krad), high computational performance (lockstep dual-core compare, 300MHz CPU clock, 1.66DMIPS/MHz). &
-    \cite{athena_obc_site, athena_obc_ti_app, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                                     \\ \hline
+    \cite{athena_obc_site, athena_obc_ti_app, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                             \\ \hline
     Orcasat OBC                                                                                                                                                                                                                                                                       &
     University of Victoria                                                                                                                                                                                                                                                            &
     TI TMS570LS0714 (Dual ARM Cortex-R4F)                                                                                                                                                                                                                                             &
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Operates in lockstep, ECC integrated flash \& RAM banks, radiation-tested up to 6 krad, 80MHz core clock.                                                                                                                                            &
-    \cite{orcasat_obc_site, orcasat_obc_ds}                                                                                                                                                                                                                                                                                                                                                           \\ \hline
+    \cite{orcasat_obc_site, orcasat_obc_ds}                                                                                                                                                                                                                                                                                                                                                   \\ \hline
     LORIS OBC                                                                                                                                                                                                                                                                         &
     Dalhousie University                                                                                                                                                                                                                                                              &
     NXP i.MX6DL (Single-core ARM Cortex-A9)                                                                                                                                                                                                                                           &
     USB 2.0; SPI; I2C; PWM; UART; GPIO; ADC                                                                                                                                                                                                                                           &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Low profile, power efficient SoC SBC. 4GB eMMC flash storage, 256MB DDR3 RAM, 800MHz operational frequency, -40\textdegree{}C to 85\textdegree{}C temperature range.                                                                                 &
-    \cite{loris_obc_pub, loris_obc_nxp}                                                                                                                                                                                                                                                                                                                                                               \\ \hline
+    \cite{loris_obc_pub, loris_obc_nxp}                                                                                                                                                                                                                                                                                                                                                       \\ \hline
     NEUDOSE OBC                                                                                                                                                                                                                                                                       &
     McMaster University                                                                                                                                                                                                                                                               &
     Primary: AVR32. Secondary: Xilinx Zynq-7000 SoC                                                                                                                                                                                                                                   &
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Primary is COTS chosen for high TRL to reduce mission risk; secondary is designed for radiation tolerance using rad-hard and non-rad-hard components.                                                                                                                             &
-    \cite{neudose_obc_pub}                                                                                                                                                                                                                                                                                                                                                                            \\ \hline
+    \cite{neudose_obc_pub}                                                                                                                                                                                                                                                                                                                                                                    \\ \hline
     RADSAT-SK OBC                                                                                                                                                                                                                                                                     &
     University of Saskatchewan                                                                                                                                                                                                                                                        &
     ARM926EJ-S                                                                                                                                                                                                                                                                        &
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: SDRAM. Uses ISISpace satellite-subsystems libraries, contains MMU, designed to interface with external SDRAM.                                                                                                                                               &
-    \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                          \\ \hline
+    \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
   \end{longtable}
 \end{landscape}
 \clearpage
 
 \begin{landscape}
+  \phantomsection
   \section{Appendix B: Table of commercial OBCs}
+  \makeatletter
+  \def\@currentlabel{B}
+  \makeatother
+  \label{sec:appendix_b}
 
   \begin{longtable}{|p{2.6cm}|p{2.0cm}|p{3.8cm}|p{3.8cm}|p{1.4cm}|p{6.4cm}|p{1.0cm}|}
     \hline \textbf{Name}                                                                                                             & \textbf{Manufacturer} & \textbf{MCU} & \textbf{Protocols} & \textbf{Standard} & \textbf{Notes} & \textbf{Ref} \\\hline \endhead
