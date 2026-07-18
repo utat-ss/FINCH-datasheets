@@ -744,7 +744,7 @@ design decisions for this subsystem.
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Features ideal for satellite OBC application, including radiation \& space reliability (rad-hard, SEL immune 48 MeV at 125\textdegree{}C, LAT 30krad), high computational performance (lockstep dual-core compare, 300MHz CPU clock, 1.66DMIPS/MHz). &
-    \cite{athena_obc_site, athena_obc_ti_app, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                             \\ \hline
+    \cite{athena_obc_site, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                             \\ \hline
     Orcasat OBC                                                                                                                                                                                                                                                                       &
     University of Victoria                                                                                                                                                                                                                                                            &
     TI TMS570LS0714 (Dual ARM Cortex-R4F)                                                                                                                                                                                                                                             &
@@ -773,98 +773,6 @@ design decisions for this subsystem.
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: SDRAM. Uses ISISpace satellite-subsystems libraries, contains MMU, designed to interface with external SDRAM.                                                                                                                                               &
     \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
-  \end{longtable}
-\end{landscape}
-\clearpage
-
-\begin{landscape}
-  \phantomsection
-  \section{Appendix B: Table of commercial OBCs}
-  \makeatletter
-  \def\@currentlabel{B}
-  \makeatother
-  \label{sec:appendix_b}
-
-  \begin{longtable}{|p{2.6cm}|p{2.0cm}|p{3.8cm}|p{3.8cm}|p{1.4cm}|p{6.4cm}|p{1.0cm}|}
-    \hline \textbf{Name}                                                                                                             & \textbf{Manufacturer} & \textbf{MCU} & \textbf{Protocols} & \textbf{Standard} & \textbf{Notes} & \textbf{Ref} \\\hline \endhead
-    \hline
-    CFC-300                                                                                                                          &
-    Innoflight                                                                                                                       &
-    Xilinx Zynq SoC with dual-core ARM Cortex-A9 and FPGA fabric                                                                     &
-    CAN; I2C; RS422; RS485; SPI; SpaceWire                                                                                           &
-                                                                                                                                     &
-    general-purpose; high performance. Fully on-orbit programmable; FPGA bit streams reloadable.                                     &
-    \cite{cfc300_prod, cfc300_ds}, \cite[p.~222]{nasa_soa_2022}, \cite[p.~233]{nasa_soa_2023}, \cite[p.~235]{nasa_soa_2024}, \cite[p.~249]{nasa_soa_2026}                                                                                            \\ \hline
-    CubeComputer V4.1                                                                                                                &
-    CubeSpace                                                                                                                        &
-    32-bit ARM Cortex-M3 based MCU                                                                                                   &
-    CAN; I2C; SPI; UART                                                                                                              &
-    PC104                                                                                                                            &
-    General-purpose CubeSat OBC; Piggyback header—mission specific expansion. Used as ADCS OBC on QB50 precursor satellites.         &
-    \cite{cubecomputer_v41_prod, cubecomputer_v41_ds}                                                                                                                                                                                                \\ \hline
-    Gen 2 OBC                                                                                                                        &
-    NOVI Space                                                                                                                       &
-    Vorago ARM Cortex M4                                                                                                             &
-                                                                                                                                     &
-    PC104                                                                                                                            &
-    Embedded memory type: FRAM.                                                                                                      &
-    \cite[p.~222]{nasa_soa_2022}, \cite[p.~234]{nasa_soa_2023}, \cite[p.~236]{nasa_soa_2024}, \cite[p.~250]{nasa_soa_2026}                                                                                                                           \\ \hline
-    iOBC                                                                                                                             &
-    ISISPACE                                                                                                                         &
-    Some Atmel ARM9 (32-bit ARM9) [datasheet]                                                                                        &
-    GPIO; I2C; RS232; RS422; RS485; SPI; UART; USB                                                                                   &
-                                                                                                                                     &
-                                                                                                                                     &
-    \cite{iobc_prod, iobc_ds}                                                                                                                                                                                                                        \\ \hline
-    Main Bus Unit SatBus 3C2                                                                                                         &
-    NanoAvionics                                                                                                                     &
-                                                                                                                                     &
-    CAN; I2C; SPI; UART; USB                                                                                                         &
-                                                                                                                                     &
-    No datasheet; includes ADCS.                                                                                                     &
-    \cite{satbus_3c2_prod}                                                                                                                                                                                                                           \\ \hline
-    NANOMIND A3200                                                                                                                   &
-    GOMSPACE                                                                                                                         &
-    Atmel AT32UC3C MCU / AVR32 MCU                                                                                                   &
-    CAN; Cubesat Space Protocol; I2C; SPI; UART                                                                                      &
-                                                                                                                                     &
-    Tiny.                                                                                                                            &
-    \cite{nanomind_a3200_prod, nanomind_a3200_ds}, \cite[p.~223]{nasa_soa_2022}, \cite[p.~234]{nasa_soa_2023}, \cite[p.~236]{nasa_soa_2024}, \cite[p.~250]{nasa_soa_2026}                                                                            \\ \hline
-    NANOMIND HP MK3                                                                                                                  &
-    GOMSPACE                                                                                                                         &
-    Xilinx Zynq 7030 (FPGA + ARM) [product page]                                                                                     &
-    CAN; RS422; RS485; SPI; SpaceWire; USB                                                                                           &
-                                                                                                                                     &
-    High performance (ARM dual core); FPGA included. Flew on SDR MK III; has PPS.                                                    &
-    \cite{nanomind_hp_mk3_prod, nanomind_hp_mk3_ds}, \cite[p.~225]{nasa_soa_2022}, \cite[p.~236]{nasa_soa_2023}, \cite[p.~238]{nasa_soa_2024}, \cite[p.~252]{nasa_soa_2026}                                                                          \\ \hline
-    NanoMind HP (PolarFire)                                                                                                          &
-    GOMSPACE                                                                                                                         &
-    32-bit RISC-V core / PolarFire                                                                                                   &
-                                                                                                                                     &
-    PC104                                                                                                                            &
-    Embedded memory type: DDR3.                                                                                                      &
-    \cite[p.~225]{nasa_soa_2022}, \cite[p.~236]{nasa_soa_2023}, \cite[p.~238]{nasa_soa_2024}, \cite[p.~252]{nasa_soa_2026}                                                                                                                           \\ \hline
-    OBC - P4                                                                                                                         &
-    Space Inventor                                                                                                                   &
-    ARM Cortex-M7                                                                                                                    &
-    CAN                                                                                                                              &
-                                                                                                                                     &
-    four OBC modules; hot/cold redundancy solutions (Datasheet: request on satsearch). FreeRTOS(tm) real time operating system.      &
-    \cite{obc_p4_prod}                                                                                                                                                                                                                               \\ \hline
-    Sirius OBC LEON3FT                                                                                                               &
-    AAA Clyde Space                                                                                                                  &
-    32-bit LEON3FT (IEEE-1754 SPARC v8) fault-tolerant processor                                                                     &
-    CAN; GPIO; RS422; RS485; SpaceWire                                                                                               &
-    SpaceWire 50 Mbps                                                                                                                &
-    Reliable high-performance for advanced missions; designed and qualified for five years in LEO. Embedded memory type: NAND Flash. &
-    \cite{sirius_obc_prod, sirius_obc_ds}, \cite[p.~219]{nasa_soa_2022}, \cite[p.~230]{nasa_soa_2023}, \cite[p.~232]{nasa_soa_2024}, \cite[p.~246]{nasa_soa_2026}                                                                                    \\ \hline
-    [the] ONBOARD COMPUTER                                                                                                           &
-    EnduroSat                                                                                                                        &
-    ARM Cortex M7                                                                                                                    &
-    I2C                                                                                                                              &
-    PC104                                                                                                                            &
-    Option to include GNSS receiver (Datasheet: [reg walled]). Embedded memory type: Flash.                                          &
-    \cite{endurosat_obc_prod}, \cite[p.~222]{nasa_soa_2022}, \cite[p.~233]{nasa_soa_2023}, \cite[p.~235]{nasa_soa_2024}, \cite[p.~249]{nasa_soa_2026}                                                                                                \\ \hline
   \end{longtable}
 \end{landscape}
 \clearpage
