@@ -49,18 +49,19 @@ In terms of sources, two major categories are surveyed:
         designs listed in Appendix~\ref{sec:appendix_a})
 \end{itemize}
 
+\onecolumn
+
 \section{Document Revisions}
 
 \begin{center}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabularx}{\columnwidth}{|l|l|l|X|}
-\hline
-\textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Description} \\ \hline
-0.1 & July 2026 & Boris & Initial \\ \hline
-\end{tabularx}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\columnwidth}{|l|l|l|X|}
+    \hline
+    \textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Description}                                     \\ \hline
+    0.1              & July 2026     & Boris           & Initial                                                  \\ \hline
+    0.2              & July 2026     & Jennifer        & Expanded protocol, interconnect, and COTS trade studies. \\ \hline
+  \end{tabularx}
 \end{center}
-
-\onecolumn
 
 \section{Design Space}
 
@@ -80,6 +81,7 @@ performance \cite{nasa_soa_2022,nasa_soa_2023,nasa_soa_2024,nasa_soa_2026}.
 Higher-performance FPGAs, application processors, and system-on-chip devices
 are generally introduced when the OBC must also support image processing,
 autonomy, high-rate payload data, or machine-learning workloads.
+
 
 \begin{longtable}{|p{2.8cm}|p{4.6cm}|p{5.3cm}|p{3.8cm}|}
   \caption{Candidate OBC control-unit architectures} \label{tab:control_architectures} \\ \hline
@@ -180,219 +182,305 @@ This section will summarize the survey or protocols across the NASA's SOAs as
 well as Canadian design teams' CubeSats in
 Table~\ref{tab:protocol_design_space}, as well as provide an overview of
 interconnect architectures in Table~\ref{tab:interconnect_architectures}.
+Communication interfaces differ not only in throughput, but also in topology,
+wiring complexity, fault containment, and implementation requirements.
+Consequently, protocol selection should consider the electrical implementation
+and system architecture in addition to nominal data rate.
+
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \renewcommand{\arraystretch}{1.15}
-\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{5.0cm}|p{5.2cm}|}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{5.0cm}|
+  >{\raggedright\arraybackslash}p{5.2cm}|}
   \caption{Protocol and electrical-interface design space} \label{tab:protocol_design_space} \\ \hline
-  \textbf{Protocol}                                                 &
-  \textbf{Representative Rate}                                      &
-  \textbf{Survey Examples}                                          &
+  \textbf{Protocol}                                                    &
+  \textbf{Representative Rate}                                         &
+  \textbf{Survey Examples}                                             &
   \textbf{Primary Considerations}                                                            \\ \hline
   \endfirsthead
   \caption[]{Protocol and electrical-interface design space (Continued)}                     \\ \hline
-  \textbf{Protocol}                                                 &
-  \textbf{Representative Rate}                                      &
-  \textbf{Survey Examples}                                          &
+  \textbf{Protocol}                                                    &
+  \textbf{Representative Rate}                                         &
+  \textbf{Survey Examples}                                             &
   \textbf{Primary Considerations}                                                            \\ \hline
   \endhead
   \hline
   \endfoot
 
-  I\textsuperscript{2}C                                             &
-  100~kbit/s--3.4~Mbit/s                                            &
+  I\textsuperscript{2}C                                                &
+  100~kbit/s--3.4~Mbit/s                                               &
   LORIS OBC \cite{loris_obc_pub}; identified as a common synchronous interface
   in all four NASA surveys
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~224]{nasa_soa_2026}.                                     &
+  \cite[p.~224]{nasa_soa_2026}.                                        &
   Low pin count and broad peripheral support; limited distance and bandwidth;
-  shared-bus faults may block all devices.                                                   \\ \hline
+  shared-bus faults may block all devices. Bus capacitance and pull-up sizing
+  constrain the usable rate as devices are added. If SDA remains stuck low, the
+  I\textsuperscript{2}C specification recommends nine SCL pulses, followed by
+  hardware reset or power cycling if the bus is not released
+  \cite{nxp_um10204}.                                                                        \\ \hline
 
-  SPI                                                               &
-  Application-dependent; commonly 1--50+~Mbit/s                     &
+  SPI                                                                  &
+  Application-dependent; commonly 1--50+~Mbit/s                        &
   LORIS OBC \cite{loris_obc_pub}; NASA interface surveys
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~224]{nasa_soa_2026}.                                     &
+  \cite[p.~224]{nasa_soa_2026}.                                        &
   Deterministic and comparatively fast; requires separate chip-select signals
-  and provides no standardized addressing or error handling.                                 \\ \hline
+  and provides no standardized addressing or error handling. Clock mode,
+  chip-select timing, and SCLK routing or fan-out must be verified for each
+  peripheral, particularly at higher rates \cite{adi_spi_errors}.                            \\ \hline
 
-  UART / RS-422 / RS-485                                            &
-  Typically kbit/s to approximately 10~Mbit/s                       &
-  LORIS uses UART \cite{loris_obc_pub}; differential serial interfaces are
-  listed by NASA
+  UART                                                              &
+  Device-dependent; commonly kbit/s to several Mbit/s                &
+  LORIS uses UART \cite{loris_obc_pub}; asynchronous serial interfaces
+  are listed by NASA
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
   \cite[p.~224]{nasa_soa_2026}.                                     &
-  Simple implementation. RS-422/485 provides greater noise immunity and cable
-  length than logic-level UART; termination and driver control are required.
-  \\ \hline
+  Simple asynchronous point-to-point communication with low
+  implementation complexity. UART does not inherently provide addressing,
+  arbitration, acknowledgement, or error recovery, so these functions must
+  be implemented by higher-level software \cite{microchip_uart}.     \\ \hline
+
+  RS-422                                                            &
+  Approximately 90~kbit/s at 1,200~m to
+  10~Mbit/s at 4.5~m                                                &
+  Differential serial interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  Differential simplex multidrop communication with one driver and up to
+  ten receivers. It provides greater noise immunity and usable cable length
+  than logic-level UART, but requires appropriate cabling and termination
+  \cite{adi_an960}.                                                  \\ \hline
+
+  RS-485                                                            &
+  Approximately 100~kbit/s at 1,200~m to 10~Mbit/s at 12~m          &
+  Differential serial interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                     &
+  Differential multipoint communication allowing multiple
+  transceivers to share a bus. Termination is required for reliable
+  higher-rate or longer links, and half-duplex implementations require
+  driver-direction control \cite{adi_an960,adi_cn0416}.              \\ \hline
 
   CAN / CAN FD                                                      &
-  1~Mbit/s Classical CAN; commonly up to 8~Mbit/s CAN-FD data phase &
+  1~Mbit/s Classical CAN; commonly up to 8~Mbit/s CAN-FD data phase    &
   STM32L4 PC/104 OBC \cite{stm32l4_vst104_pub}; CAN is listed as a common
   spacecraft fieldbus
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[pp.~224--225]{nasa_soa_2026}.                               &
+  \cite[pp.~224--225]{nasa_soa_2026}.                                  &
   Differential multidrop operation, arbitration, acknowledgements, and error
   confinement make it suitable for EPS, ADCS, RF, and housekeeping traffic.
-  Payload throughput is limited.                                                             \\ \hline
+  Payload throughput is limited. The bus should be terminated at its two
+  physical ends, with node stubs kept short to reduce reflections
+  \cite{ti_can_phy,ecss_canbus}.                                                             \\ \hline
 
-  USB 2.0                                                           &
-  Up to 480~Mbit/s                                                  &
-  LORIS OBC \cite{loris_obc_pub}.                                   &
-  High COTS compatibility and throughput, but host/device roles, connector
-  retention, software complexity, and limited spacecraft-bus heritage must be
-  considered.                                                                                \\ \hline
+  USB 2.0                                                              &
+  12~Mbit/s full-speed; 480~Mbit/s high-speed                          &
+  LORIS OBC \cite{loris_obc_pub}.                                      &
+  High COTS compatibility and throughput, but host/device roles, enumeration,
+  connector retention, software complexity, VBUS sensing, and the board's USB
+  power arrangement must be defined \cite{usb20_spec,st_an4879}.                             \\ \hline
 
-  Ethernet                                                          &
-  100~Mbit/s--1~Gbit/s commonly                                     &
+  Ethernet                                                             &
+  100~Mbit/s--1~Gbit/s commonly                                        &
   Listed as a network interface in each NASA survey
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~224]{nasa_soa_2026}.                                     &
+  \cite[p.~224]{nasa_soa_2026}.                                        &
   High throughput and broad software support; requires switching or routing and
   may require additional measures for deterministic real-time operation.
   \\ \hline
 
-  SpaceWire / SpaceFibre                                            &
-  SpaceWire: typically 10--400~Mbit/s;
-  SpaceFibre: multi-Gbit/s                                          &
+  SpaceWire / SpaceFibre                                               &
+  SpaceWire: 2--400~Mbit/s;
+  SpaceFibre: up to 5~Gbit/s per lane and over 20~Gbit/s using
+  multiple lanes \cite{ecss_spacewire,ecss_spacefibre}                 &
   SpaceWire is listed in the 2022--2024 surveys
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024};
   SpaceWire and SpaceFibre are included together in 2026
-  \cite[p.~225]{nasa_soa_2026}.                                     &
-  Space-qualified point-to-point networking with routing and fault-management
-  support. Requires more specialized hardware and software than CAN or UART.
+  \cite[p.~225]{nasa_soa_2026}.                                        &
+  Spacecraft-specific point-to-point networking with packet routing and
+  link-level fault management. SpaceFibre additionally supports virtual
+  channels, quality of service, and improved fault detection, isolation, and
+  recovery. Both require more specialized implementation and test resources
+  than conventional MCU buses \cite{ecss_spacewire,ecss_spacefibre}.                         \\ \hline
+
+  PPS (Pulse Per Second)                                               &
+  1 pulse/s                                                            &
+  GNSS receivers commonly provide a configurable timing-pulse output; the
+  ZED-F9P is one representative implementation \cite{ublox_zedf9p_im}. &
+  Provides a precise synchronization edge but does not independently encode the
+  absolute time. It is normally paired with UART or another data interface;
+  electrical level, jitter, routing, and holdover behaviour must be considered.
   \\ \hline
 
-  SerDes / MGT                                                      &
-  Gigabit-per-second class; XAUI provides 10~Gbit/s aggregate       &
+  SerDes / MGT                                                         &
+  Gigabit-per-second class; XAUI provides 10~Gbit/s aggregate          &
   Identified by NASA as high-rate mission-data interfaces
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~225]{nasa_soa_2026}.                                     &
+  \cite[p.~225]{nasa_soa_2026}.                                        &
   Suitable for FPGA, payload, mass-memory, and radio data paths. Requires
   controlled-impedance routing, suitable connectors, reference clocks, and
   signal-integrity analysis.                                                                 \\ \hline
 
   GPIO / PWM /
-  ADC / DAC                                                         &
-  Application-dependent                                             &
+  ADC / DAC                                                            &
+  Application-dependent                                                &
   LORIS provides GPIO, PWM, and ADC \cite{loris_obc_pub}; discrete and analog
   interfaces are listed by NASA
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~225]{nasa_soa_2026}.                                     &
+  \cite[p.~225]{nasa_soa_2026}.                                        &
   Appropriate for enables, inhibits, deployment signals, and analog telemetry;
   creates dedicated wiring and provides little inherent fault detection.
   \\ \hline
 
-  JTAG / ISP / ICSP                                                 &
-  Not a mission-data interface                                      &
+  JTAG / ISP / ICSP                                                    &
+  Not a mission-data interface                                         &
   Debug and programming interfaces are listed in the NASA surveys
   \cite[p.~219]{nasa_soa_2022}
   \cite[p.~235]{nasa_soa_2023}
   \cite[p.~240]{nasa_soa_2024}
-  \cite[p.~225]{nasa_soa_2026}.                                     &
+  \cite[p.~225]{nasa_soa_2026}.                                        &
   Required for programming and board-level debugging; access should be isolated
   or protected during flight.                                                                \\ \hline
 \end{longtable}
 
 
 \renewcommand{\arraystretch}{1.15}
-\begin{longtable}{|p{3.0cm}|p{4.5cm}|p{4.1cm}|p{4.0cm}|}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{3.0cm}|
+  >{\raggedright\arraybackslash}p{4.5cm}|
+  >{\raggedright\arraybackslash}p{4.1cm}|
+  >{\raggedright\arraybackslash}p{4.0cm}|}
   \caption{Candidate interconnect architectures} \label{tab:interconnect_architectures} \\ \hline
-  \textbf{Architecture}                                                  &
-  \textbf{Connection Pattern}                                            &
-  \textbf{Advantages}                                                    &
+  \textbf{Architecture}                                          &
+  \textbf{Connection Pattern}                                    &
+  \textbf{Advantages}                                            &
   \textbf{Limitations}                                                                  \\ \hline
   \endfirsthead
   \caption[]{Candidate interconnect architectures (Continued)}                          \\ \hline
-  \textbf{Architecture}                                                  &
-  \textbf{Connection Pattern}                                            &
-  \textbf{Advantages}                                                    &
+  \textbf{Architecture}                                          &
+  \textbf{Connection Pattern}                                    &
+  \textbf{Advantages}                                            &
   \textbf{Limitations}                                                                  \\ \hline
   \endhead
   \hline
   \endfoot
 
-  Unified stack                                                          &
+  Unified stack                                                  &
   OBC, EPS, RF, ADCS, and payload share a PC/104-style stack-through connector
   carrying power and common buses. The STM32L4 academic OBC uses this format
   \cite{stm32l4_vst104_pub}. NASA discusses PC/104 and stackable mezzanines in
   \cite[p.~210]{nasa_soa_2022},
   \cite[pp.~226--227]{nasa_soa_2023},
   \cite[pp.~229--230]{nasa_soa_2024}, and
-  \cite[p.~222]{nasa_soa_2026}.                                          &
-  Compact, modular, and requires little harnessing.                      &
-  Shared pinout constrains all boards; board order and connector bandwidth may
-  become limiting.                                                                      \\ \hline
+  \cite[p.~222]{nasa_soa_2026}.                                  &
+  Compact, modular, rugged, and requires little harnessing. The self-stacking
+  arrangement eliminates the need for a separate backplane or card cage
+  \cite{pc104_standard}.                                         &
+  Shared pinout constrains all boards; board order, connector bandwidth, and
+  available signal lanes may limit expansion. Shared power or bus paths can
+  also reduce fault isolation between boards.                                           \\ \hline
 
-  Backplane                                                              &
+  Backplane                                                      &
   Subsystem cards plug into a shared CompactPCI or SpaceVPX backplane
   \cite[p.~210]{nasa_soa_2022}
   \cite[p.~226]{nasa_soa_2023}
   \cite[p.~229]{nasa_soa_2024}
-  \cite[p.~222]{nasa_soa_2026}.                                          &
-  Rigid mechanical support, modular replacement, and high-speed routing. &
-  Higher mass, volume, connector cost, and chassis complexity.                          \\ \hline
+  \cite[p.~222]{nasa_soa_2026}.                                  &
+  Rigid mechanical support, modular replacement, standardized slot and module
+  interfaces, and high-speed routing. SpaceVPX additionally targets
+  interoperable and fault-tolerant systems \cite{vita_spacevpx}. &
+  Higher mass, volume, connector cost, and chassis complexity, with additional
+  mechanical, electrical, and interoperability verification.                            \\ \hline
 
-  Centralized point-to-point                                             &
+  Centralized point-to-point                                     &
   Each subsystem has a dedicated connection to the OBC; all commands and data
   pass through the OBC. NASA identifies direct point-to-point and centralized
   architectures in
   \cite[p.~207]{nasa_soa_2022} and
-  \cite[p.~226]{nasa_soa_2024}.                                          &
-  Simple command authority and strong link-level isolation.              &
-  High connector count; OBC becomes a bandwidth bottleneck and single point of
-  failure.                                                                              \\ \hline
+  \cite[p.~226]{nasa_soa_2024}.                                  &
+  Simple command authority, dedicated links, predictable data paths, and strong
+  link-level isolation.                                          &
+  Connector and harness count increase with the number of subsystems. The OBC
+  can become a bandwidth bottleneck and single point of failure, particularly
+  when high-rate payload traffic passes through it
+  \cite[pp.~221--223]{nasa_soa_2026}.                                                   \\ \hline
 
-  Shared peer network                                                    &
+  Shared peer network                                            &
   OBC, EPS, RF, ADCS, and payload controllers communicate as peers over CAN,
-  Ethernet, or SpaceWire.                                                &
-  Reduces wiring, allows direct subsystem communication, and supports
-  distributed control.                                                   &
-  Requires addressing, arbitration, synchronization, and network-level fault
-  management.                                                                           \\ \hline
+  Ethernet, or SpaceWire.                                        &
+  Reduces dedicated wiring, allows direct subsystem communication, and supports
+  distributed control. Subsystem-local processing may reduce dependence on the
+  primary OBC \cite[pp.~221--222]{nasa_soa_2026}.                &
+  Requires addressing, arbitration or routing, synchronization, and
+  network-level fault management. Shared-bus behaviour, node failures, and any
+  redundancy-management strategy must be defined and verified
+  \cite{ecss_canbus,ecss_spacewire}.                                                    \\ \hline
 
-  Payload pass-through                                                   &
+  Payload pass-through                                           &
   The OBC controls the payload, while high-rate data travels directly between
-  the payload, mass memory, FPGA, and RF subsystem.                      &
+  the payload, mass memory, FPGA, and RF subsystem.              &
   Avoids loading the housekeeping bus or copying all payload data through the
-  primary MCU.                                                           &
+  primary MCU, while allowing a dedicated path to support higher throughput
+  \cite[pp.~222--223]{nasa_soa_2026}.                            &
   Requires separate control and data paths, flow control, buffering, and an OBC
-  mechanism to isolate or reset the data path.                                          \\ \hline
+  mechanism to isolate or reset the data path. The OBC must retain sufficient
+  status and fault visibility to manage the path safely.                                \\ \hline
 
-  Hybrid dual-plane                                                      &
+  Hybrid dual-plane                                              &
   A low-speed CAN or stack bus carries commands and housekeeping data, while
   dedicated Ethernet, SpaceWire, or SerDes links carry payload data. NASA
   describes this mixed topology in
-  \cite[pp.~222--223]{nasa_soa_2026}.                                    &
-  Combines a robust housekeeping network with scalable payload throughput and
-  fault isolation.                                                       &
-  Requires two interface classes and clear ownership of commands, telemetry,
-  and high-rate data.                                                                   \\ \hline
+  \cite[pp.~222--223]{nasa_soa_2026}.                            &
+  Combines a robust housekeeping network with scalable payload throughput.
+  Separating control and high-rate traffic can reduce contention and improve
+  fault containment between traffic classes.                     &
+  Requires two interface classes, additional integration and verification, and
+  clear ownership of commands, telemetry, timing, and high-rate data. Fault
+  detection and recovery must be coordinated across both planes.                        \\ \hline
 \end{longtable}
+
+Redundancy is not necessarily a separate base topology and may instead be
+applied selectively to critical links, buses, or nodes within any of the
+architectures above. It can improve availability, but adds transceivers,
+wiring, connector pins, power consumption, software logic, and verification
+effort \cite{nasa_soa_2026,ecss_canbus}.
+
 
 For the mission, the interconnect as well as the protocol bouquet selection will
 want to target higher throughput interfaces for RF and PAY subsystems, and thus
 will generally be dictated by them. In the spirit of a generic design, selecting
-a highet-speed interface is favoured, yet this might collide with the
+a higher-speed interface is favoured, yet this might collide with the
 interconnect architecture selection since certain interfaces require specific
-connections that may not for example berouted through PC104 due to signal
+connections that may not, for example, be routed through PC/104 due to signal
 integrity requirements (e.g. SpaceFibre). The stack-up requirements and/or
 constraints might also be driven by Mechanical subsystem.
+Consequently, interface selection should balance throughput with connector
+capability, harness length, routing, and signal-integrity constraints rather
+than relying on nominal data rate alone \cite{ecss_spacewire,ecss_spacefibre}.
 
 \section{Periptherals}
 
@@ -518,7 +606,69 @@ many of the necessary periptherals on the same chip.
 This section outlines alternative off-the-shelf components that would in part or
 in full fulfil the operating requirements of the subsystem.
 
-\textbf{TODO}
+The following component-level COTS alternatives preserve a custom Electrical
+BUS architecture while reducing development effort for selected functions.
+They are trade-study candidates rather than flight-qualified selections;
+mission-specific part assurance, derating, and radiation assessment remain
+required \cite{ecss_cots_2025}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{4.6cm}|p{4.8cm}|p{4.1cm}|}
+  \caption{Preliminary component-level COTS alternatives} \label{tab:cots_alternatives} \\ \hline
+  \textbf{Function}                                                          &
+  \textbf{Example Candidates}                                                &
+  \textbf{Potential OBC Use}                                                 &
+  \textbf{Main Trade Considerations}                                                    \\ \hline
+  \endfirsthead
+  \caption[]{Preliminary component-level COTS alternatives (Continued)}                 \\ \hline
+  \textbf{Function}                                                          &
+  \textbf{Example Candidates}                                                &
+  \textbf{Potential OBC Use}                                                 &
+  \textbf{Main Trade Considerations}                                                    \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Non-volatile storage                                                       &
+Everspin MR25H40 SPI MRAM for critical state and logs
+\cite{everspin_mr25h40}, and Infineon S25HL512T serial NOR flash for
+firmware storage or recovery images \cite{infineon_s25hl512t}.               &
+  Persistent configuration, deployment state, reset history, fault logs,
+  firmware, and a recovery image.                                            &
+  Capacity, endurance, retention, write protection, boot recovery,
+  power-loss behaviour, and radiation response.                                         \\ \hline
+
+  Independent fault recovery                                                 &
+  TI TPS3431 watchdog, TPS3703 voltage supervisor, and TPS22919 load
+  switch \cite{ti_tps3431,ti_tps3703,ti_tps22919}.                           &
+  Detect processor lock-up, supervise the supply, and provide a hardware
+  reset or power-cycle path.                                                 &
+  Independence from the MCU, timeout and threshold selection, reset
+  coverage, load current, default state, and control ownership.                         \\ \hline
+
+  Timing and clocking                                                        &
+  Micro Crystal RV-3028-C7 RTC \cite{microcrystal_rv3028}, plus an
+  industrial crystal or TCXO selected using oscillator guidance
+  \cite{st_an2867}.                                                          &
+  Maintain timestamps through resets and provide stable MCU and interface
+  timing.                                                                    &
+  Backup supply, drift, calibration, startup margin, temperature stability,
+  synchronization, and PCB placement.                                                   \\ \hline
+
+  Differential bus interface                                                 &
+  TI TCAN1042-Q1 CAN/CAN-FD transceiver \cite{ti_tcan1042} or Analog
+  Devices ADM3065E RS-485 transceiver \cite{adi_adm3065e}.                   &
+  Implement the physical layer between MCU logic and a differential bus.     &
+  Common-mode range, delay, standby state, termination, fault protection,
+  isolation needs, and radiation assessment.                                            \\ \hline
+
+  Board-health monitoring                                                    &
+  TI TMP117 temperature sensor and INA238 current, voltage, and power
+  monitor \cite{ti_tmp117,ti_ina238}.                                        &
+  Provide local temperature and supply-rail telemetry for health monitoring. &
+  Placement, range, shunt sizing, conversion time, addressing, power,
+  failure response, and radiation behaviour.                                            \\ \hline
+\end{longtable}
 
 \section{System Architecture and Budgets}
 
@@ -744,7 +894,7 @@ design decisions for this subsystem.
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Features ideal for satellite OBC application, including radiation \& space reliability (rad-hard, SEL immune 48 MeV at 125\textdegree{}C, LAT 30krad), high computational performance (lockstep dual-core compare, 300MHz CPU clock, 1.66DMIPS/MHz). &
-    \cite{athena_obc_site, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                             \\ \hline
+    \cite{athena_obc_site, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                                                \\ \hline
     Orcasat OBC                                                                                                                                                                                                                                                                       &
     University of Victoria                                                                                                                                                                                                                                                            &
     TI TMS570LS0714 (Dual ARM Cortex-R4F)                                                                                                                                                                                                                                             &
