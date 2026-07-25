@@ -150,9 +150,88 @@ their net labels.
 
 \subsection{ADCS}
 
-TODO: specify JTAG pinout and reference layout position; add the image of the
-connector and the BOM part. Make sure to cover the protection circuitry in the
-corresponding subsection.
+\begin{center}
+\begin{tabular}{c l l}
+\hline
+\textbf{Pin} & \textbf{Signal} & \textbf{Description} \\
+\hline
+1  & ADCSVCC3V3       & 3.3 V power supply \\
+2  & ADCSVCC3V3       & 3.3 V power supply \\
+3  & GND              & Ground \\
+4  & GND              & Ground \\
+5  & GND              & Ground \\
+6  & ADCSVCC5V2       & 5 V power supply \\
+7  & ADCSVCC5V2       & 5 V power supply \\
+8  & ADCSVCC5V2       & 5 V power supply \\
+9  & ADCS\_ERR\_n     & Active-low error signal \\
+10 & UART\_OBC\_TX    & UART transmit \\
+11 & UART\_OBC\_RX    & UART receive \\
+12 & GND              & Ground \\
+13 & ADCS\_GNSS\_PPS  & GNSS pulse-per-second timing \\
+14 & ADCS\_GNSS\_TX   & GNSS UART TX signal \\
+15 & GND              & Ground \\
+\hline
+\end{tabular}
+\end{center}
+
+Protection circuitry actually consists of two layers:
+\begin{enumerate}
+    \item ESD protection (PESD4USB3B-TTSX) at the connector.
+    \item Signal buffers (74LVC1G125) between the connector and the MCU.
+\end{enumerate}
+
+External signals first pass through ESD protection to suppress damaging voltage transients, while the buffers electrically isolate the MCU and improve signal drive and integrity.
+
+\textbf{1. ESD Protection}
+
+The external ADCS connector is protected using PESD4USB3B-TTSX low-capacitance ESD protection arrays.
+
+These devices protect the following external signals:
+
+\begin{center}
+\begin{tabular}{l l}
+\hline
+\textbf{Device} & \textbf{Protected Signals} \\
+\hline
+D204 & ADCS\_GNSS\_PPS, ADCS\_GNSS\_TX \\
+D205 & ADCS\_ERR\_n, UART\_OBC\_TX, UART\_OBC\_RX \\
+D215 & UART\_STAR\_TX, UART\_STAR\_RX \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{2. UART and GPIO Buffers}
+
+Following the ESD protection stage, the interface signals pass through 74LVC1G125 non-inverting tri-state buffers.
+
+\textbf{UART Buffers}
+
+\begin{center}
+\begin{tabular}{l l}
+\hline
+\textbf{Buffer} & \textbf{Signal} \\
+\hline
+U307 & UART\_OBC\_TX \\
+U308 & UART\_OBC\_RX \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{GPIO Buffers}
+
+\begin{center}
+\begin{tabular}{l l}
+\hline
+\textbf{Buffer} & \textbf{Signal} \\
+\hline
+U309 & ADCS\_GNSS\_PPS \\
+U310 & ADCS\_GNSS\_TX \\
+U311 & ADCS\_ERR\_n \\
+\hline
+\end{tabular}
+\end{center}
+
+The buffers are always enabled and reproduce the input signal at the output because the active-low output enable ($\overline{\mathrm{OE}}$) input is permanently connected to ground.
 
 \subsection{JTAG}
 
