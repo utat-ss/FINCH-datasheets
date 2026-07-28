@@ -707,7 +707,200 @@ peak for high-performance payload computers.
 
 \subsection{Weight}
 
-\subsection{Radiation tolerance}
+\subsection{Protections}
+
+Protecting the electrical compenets of the BUS electronics from the harsh space
+environment is of paramount concenr to the design. This section details the
+consideraitons with respect to the design and how to achieve them
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.5cm}|p{6.5cm}|p{6.5cm}|}
+  \caption{Protection considerations} \label{tab:protection_considerations} \\ \hline
+  \textbf{Consideration} &
+  \textbf{Description} &
+  \textbf{Example solutions} \\ \hline
+  \endfirsthead
+  \caption[]{Protection considerations (Continued)} \\ \hline
+  \textbf{Consideration} &
+  \textbf{Description} &
+  \textbf{Example solutions} \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Mission radiation environment &
+  Radiation exposure depends on orbit, inclination, mission duration, shielding,
+  and solar activity. Parts should be selected against a mission-specific
+  radiation analysis with an appropriate design margin
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}. &
+  Model the expected environment using tools such as SPENVIS \cite{spenvis} or
+  CREME-MC \cite{creme_mc} and
+  select components whose test conditions exceed the predicted exposure.
+  Athena uses a TMS570 device characterized to approximately 30~krad, while
+  ORCASat selected a device tested to 6~krad
+  \cite{athena_obc_ti_app,athena_obc_ti_prod,orcasat_obc_ds}. \\ \hline
+
+  Total ionizing dose (TID) &
+  TID represents cumulative ionizing-radiation exposure and can gradually alter
+  device parameters or cause permanent failure. NASA notes that many COTS parts
+  may tolerate only approximately 2--10~krad, although tolerance varies strongly
+  with device and fabrication process
+  \cite[pp.~177--178]{nasa_soa_2022}
+  \cite[pp.~191--193]{nasa_soa_2023}
+  \cite[pp.~194--196]{nasa_soa_2024}
+  \cite[pp.~191--192]{nasa_soa_2026}. &
+  Use components with tested TID ratings, such as the VORAGO VA41630 MCU or
+  GR712RC processor, or apply shielding where COTS components cannot meet the
+  required dose
+  \cite{vorago_va41630,gaisler_gr712rc}. \\ \hline
+
+  Displacement damage dose (DDD) &
+  Displacement damage results from non-ionizing particle interactions and must
+  be considered separately from TID, particularly for sensors, optoelectronics,
+  and some semiconductor technologies
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[p.~221]{nasa_soa_2026}. &
+  Require component-specific proton or neutron characterization rather than
+  assuming that a TID rating also covers displacement damage. Microchip
+  publishes separate proton, TID, and SEE characterization for its
+  radiation-tolerant FPGA families
+  \cite{microchip_radiation_data}. \\ \hline
+
+  Single-event upset (SEU) &
+  An SEU changes a memory or logic state without necessarily causing permanent
+  damage. Protection is required for processor state, working memory,
+  non-volatile memory, and FPGA configuration
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}. &
+  Use ECC or EDAC, memory scrubbing, redundant boot images, software consistency
+  checks, and configuration-immune programmable logic. The GR712RC provides
+  memory EDAC, while the RTG4 FPGA uses SEU-immune flash configuration
+  \cite{gaisler_gr712rc,microchip_rtg4}. \\ \hline
+
+  Single-event latch-up (SEL) &
+  SEL may place a semiconductor device into a destructive high-current state.
+  The affected circuit must be detected and disconnected before permanent damage
+  occurs
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}. &
+  Select SEL-immune components where practical and place vulnerable loads behind
+  current-limited, resettable power switches. The 3D PLUS 3DPM0356-1 provides
+  overcurrent detection, load disconnection, and controlled repowering
+  \cite{vorago_va41630,three_d_plus_protection_switch}. \\ \hline
+
+  COTS versus radiation-hardened components &
+  COTS components generally provide higher performance, lower cost, and better
+  availability, while radiation-hardened parts provide greater environmental
+  assurance. Small spacecraft frequently use a hybrid approach
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}. &
+  Combine a COTS processor with radiation-tolerant supervisors, memories,
+  programmable logic, or power-control circuitry. NEUDOSE uses a COTS AVR32
+  primary processor with a secondary Zynq-7000 system designed using both
+  radiation-hardened and non-radiation-hardened components
+  \cite{neudose_obc_pub}. \\ \hline
+
+  Watchdog and fault recovery &
+  Radiation-induced faults may leave the processor or communication interface
+  unresponsive. Recovery mechanisms should remain operational even when the
+  primary processor has failed
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~219--220,222]{nasa_soa_2026}. &
+  Use an independent watchdog, reset supervisor, communication timeout, and
+  individually switchable power domains. The GR712RC includes watchdog support,
+  while external protection switches can independently cycle affected loads
+  \cite{gaisler_gr712rc,three_d_plus_protection_switch}. \\ \hline
+
+  Memory protection &
+  Processor memory, mass storage, boot images, and FPGA configuration can have
+  different radiation responses and should be assessed independently. NASA
+  identifies ECC, EDAC, scrubbing, and redundant storage as common mitigation
+  methods
+  \cite[pp.~218--220]{nasa_soa_2022}
+  \cite[pp.~234--236]{nasa_soa_2023}
+  \cite[pp.~239--241]{nasa_soa_2024}
+  \cite[pp.~221--224]{nasa_soa_2026}. &
+  Use ECC-protected working memory, radiation-tolerant MRAM, redundant boot
+  images, and TMR-protected non-volatile storage. Example devices include
+  GR712RC EDAC-protected memory and radiation-tolerant MRAM and SPI NOR modules
+  \cite{gaisler_gr712rc,three_d_plus_mram,three_d_plus_spi_nor}. \\ \hline
+
+  Redundancy and voting &
+  Redundancy may be applied at the logic, processor, memory, board, or subsystem
+  level. It improves fault tolerance but increases power, mass, synchronization,
+  and verification requirements
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~219--222]{nasa_soa_2026}. &
+  Use lockstep processors, cold-redundant OBCs, triple-modular redundancy, or
+  distributed backup controllers. Athena and ORCASat use lockstep-capable safety
+  MCUs, while 3D PLUS offers TMR-protected SPI NOR memory
+  \cite{athena_obc_ti_prod,orcasat_obc_ds,three_d_plus_spi_nor}. \\ \hline
+
+  Radiation-hardened-by-design (RHBD) &
+  RHBD improves radiation tolerance through hardened circuit cells,
+  radiation-aware layout, specialized device structures, and selective
+  hardening of vulnerable functions
+  \cite[p.~222]{nasa_soa_2026}. &
+  Use RHBD devices such as VORAGO HARDSIL-based Cortex-M MCUs or Microchip RTG4
+  FPGAs with radiation-hardened registers and flash-based configuration
+  \cite{vorago_va41630,microchip_rtg4}. \\ \hline
+
+  Structural and localized shielding &
+  The spacecraft structure provides some inherent shielding, but protection
+  depends on material, thickness, component placement, and shielding in every
+  direction. Local shielding may be more mass-efficient than increasing the
+  thickness of the entire structure
+  \cite[pp.~176--179]{nasa_soa_2022}
+  \cite[pp.~190--194]{nasa_soa_2023}
+  \cite[pp.~193--196]{nasa_soa_2024}
+  \cite[pp.~190--193]{nasa_soa_2026}. &
+  Place sensitive processors or memories within aluminium, titanium, graded-Z,
+  or composite shields. Commercial localized shielding products, such as
+  Plasteel, target high-performance COTS processors, cameras, and memories
+  \cite{cosmic_plasteel,shields1_radiation_experiment}. \\ \hline
+
+  Secondary-radiation effects &
+  Increasing shield thickness does not always proportionally reduce dose.
+  High-energy particles interacting with shielding may generate secondary
+  particles, making material choice and layer ordering important
+  \cite[pp.~176--179]{nasa_soa_2022}
+  \cite[pp.~193--196]{nasa_soa_2024}
+  \cite[pp.~190--193]{nasa_soa_2026}. &
+  Evaluate shielding using particle-transport simulation rather than aluminium
+  thickness alone. Graded-Z shielding combines materials with different atomic
+  numbers to reduce secondary radiation
+  \cite{shields1_radiation_experiment}. \\ \hline
+
+  Surface charging and electrostatic discharge &
+  Surface charging and electrostatic discharge can damage or disrupt electrical
+  systems. This is separate from TID and single-event-effect protection
+  \cite[p.~179]{nasa_soa_2022}
+  \cite[p.~194]{nasa_soa_2023}
+  \cite[pp.~196--197]{nasa_soa_2024}
+  \cite[p.~193]{nasa_soa_2026}. &
+  Use conductive bonding, controlled grounding paths, charge-dissipative
+  coatings, and appropriate PCB surface treatments. The Shields-1 experiment
+  included a charge-dissipation film together with radiation-shielding
+  technologies
+  \cite{shields1_radiation_experiment}. \\ \hline
+\end{longtable}
+
+
 
 \section{Conclusion}
 
