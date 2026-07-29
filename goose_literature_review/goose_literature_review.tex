@@ -509,6 +509,39 @@ many of the necessary periptherals on the same chip.
 
 [TODO: survey each class of peripherals in more detail]
 
+\section{Connections between PAY and BUS}
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{3.0cm}|p{8.0cm}|}
+  \caption{Physical connectors} \label{tab:physical_connectors} \\ \hline
+  \textbf{Connector Type}                                           &
+  \textbf{Supported Protocols}                                      &
+  \textbf{Notes}                                                    \\ \hline
+  \endfirsthead
+  \caption[]{Physical connectors (Continued)}                       \\ \hline
+  \textbf{Connector Type}                                           &
+  \textbf{Supported Protocols}                                      &
+  \textbf{Notes}                                                    \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Nano-D Connectors \cite{kplabs_2024}                    &
+  LVDS \cite{kplabs_2024}                                 &
+  Used for direct high-speed data transfer (e.g., has been used for
+  connecting to X/S-band radio) \cite{kplabs_2024}.       \\ \hline
+
+  M80 connectors \cite{kplabs_2024}                       &
+  Controller Area Network (CAN) bus \cite{kplabs_2024}    &
+  Has been used in another CubeSat to connect supervisor module to
+  OBC \cite{kplabs_2024}.                                 \\ \hline
+
+  Samtec LSHM \cite{kplabs_2024}                          &
+  LVDS \cite{kplabs_2024}                                 &
+  Has been used for data streams up to 8~Gbps between optical
+  instruments and data processing unit (DPU) \cite{kplabs_2024}. \\ \hline
+\end{longtable}
+
 \section{COTS (Commercial Off the Shelf) Design Alternatives}
 
 \textit{Description: Determine what COTS solutions exist if we cannot produce a certain part of the subsystem in house. Find a COTS option for each in house design.}
