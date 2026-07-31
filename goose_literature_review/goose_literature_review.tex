@@ -442,7 +442,7 @@ Volatile working memory, which loses functionality when the electrical power is 
 
 \subsection*{Non-Volatile Program and Mass Memory}
 
-Non-volatile mass memory is persistent computer storage that retains stored data without requiring a continuous power supply, unlike volatile memory. It can store system boot code, flight software images, and long-term scientific data. Unlike the considerations for volatile memory, selection for non-volatile memory depends on many factors, including capacity, write endurance, retention, access speed, boot reliability, and susceptibility to radiation-induced corruption. Redundant boot images and error detection should be considered.
+Non-volatile mass memory is persistent computer storage that retains stored data without requiring a continuous power supply, unlike volatile memory. It can store system boot code, flight software images, and long-term scientific data. Unlike the considerations for volatile memory, selection for non-volatile memory depends on many factors, including capacity, write endurance, retention, access speed, boot reliability, and susceptibility to radiation-induced corruption. Redundant boot images and error detection should be considered. After choosing a memory type, the packaging can be considered. For example, an eMMC (embedded MultiMediaCard) is a high-density external mass storage featuring an integrated flash controller; used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and by LORIS (4~GB eMMC) \cite{loris_obc_pub}.
 
 \vspace{0.5em}
 \begin{longtable}{|p{2.8cm}|p{8.8cm}|p{2.1cm}|p{2.1cm}|}
@@ -459,20 +459,13 @@ Non-volatile mass memory is persistent computer storage that retains stored data
   High-endurance, radiation-tolerant non-volatile memory that relies on magnetic states to store data;typically used as internal or external storage for persistent system state. Used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}. &
   300~ns access time \cite[p.~224]{nasa_soa_2026} 
   &
-  %256~KB--512~MB \cite{nasa_soa_2026, everspin_mram_ds} 
+  up to 8~Gb \cite{avalanche_mram_endurance_2026} 
   \\ \hline
 
   \textbf{FRAM} \newline (Ferroelectric RAM) &
   Low-power, fast-write non-volatile memory (internal or external) that stores memory due to its ferroelectric properties; electric dipoles stay in place even without power \cite[p.~229]{nasa_soa_2023}. &
   300~ns access time \cite[p.~224]{nasa_soa_2026} &
-  %32~KB--8~MB \cite{nasa_soa_2026, ti_fram_doc} 
-  \\ \hline
-
-  \textbf{eMMC} \newline (embedded MultiMedia) &
-  High-density external mass storage featuring an integrated flash controller; used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and by LORIS (4~GB eMMC) \cite{loris_obc_pub}. &
-  %50--400~MB/s bus speed \cite{nasa_soa_2026} 
-  &
-  %4~GB--64~GB \cite{nasa_soa_2026} 
+  up to 16~Mb \cite{avalanche_mram_endurance_2026}
   \\ \hline
 
   \textbf{NAND Flash} &
