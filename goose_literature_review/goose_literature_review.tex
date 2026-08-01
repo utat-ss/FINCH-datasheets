@@ -59,7 +59,8 @@ In terms of sources, two major categories are surveyed:
     0.1              & July 2026     & Boris           & Initial                                                  \\ \hline
     0.2              & July 2026     & Jennifer        & Expanded protocol, interconnect, and COTS trade studies. \\ \hline
     0.3              & July 2026     & Boris           & Protection considerations                                \\ \hline
-    0.4              & July 2026     & Sayali          & Memory and periptherals                            \\ \hline
+    0.4              & July 2026     & Sayali          & Memory and periptherals                                  \\ \hline
+    0.5              & July 2026     & Matthew         & PAY connectors                                           \\ \hline
   \end{tabularx}
 \end{center}
 
@@ -498,34 +499,34 @@ Volatile working memory, which loses functionality when the electrical power is 
 
 \vspace{0.5em}
 \begin{longtable}{|p{2.8cm}|p{8.8cm}|p{2.1cm}|p{2.1cm}|}
-  \caption{Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:volatile_memory} \\ \hline
-  \textbf{Memory Type} & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \caption{Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:volatile_memory}                                                                                                                                                                                                                                                         \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                          & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
   \endfirsthead
-  \caption[]{Volatile Memory Types, Metrics, Considerations, and Examples (Continued)} \\ \hline
-  \textbf{Memory Type} & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \caption[]{Volatile Memory Types, Metrics, Considerations, and Examples (Continued)}                                                                                                                                                                                                                                                                       \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                          & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
   \endhead
   \hline
   \endfoot
 
-  \textbf{SRAM} \newline (Static RAM) &
-  Typically internal cache or memory within an SoC, used for low-latency code execution. Surveyed by NASA \cite[p.~218]{nasa_soa_2022} \cite[p.~234]{nasa_soa_2023} \cite[p.~239]{nasa_soa_2024} \cite[p.~223]{nasa_soa_2026}. &
-  10-25~ns access time \cite{nasa_soa_2026} &
-  4-32~Mb \cite{nasa_soa_2026} \\ \hline
+  \textbf{SRAM} \newline (Static RAM)                                                                                                                                                                                                           &
+  Typically internal cache or memory within an SoC, used for low-latency code execution. Surveyed by NASA \cite[p.~218]{nasa_soa_2022} \cite[p.~234]{nasa_soa_2023} \cite[p.~239]{nasa_soa_2024} \cite[p.~223]{nasa_soa_2026}.                  &
+  10-25~ns access time \cite{nasa_soa_2026}                                                                                                                                                                                                     &
+  4-32~Mb \cite{nasa_soa_2026}                                                                                                                                                                                                                                                                                                                               \\ \hline
 
-  \textbf{DRAM} \newline (Dynamic RAM) &
+  \textbf{DRAM} \newline (Dynamic RAM)                                                                                                                                                                                                          &
   High-density external volatile memory that uses single-transistor, single-capacitor cells. Surveyed across NASA missions \cite[p.~218]{nasa_soa_2022} \cite[p.~234]{nasa_soa_2023} \cite[p.~239]{nasa_soa_2024} \cite[p.~223]{nasa_soa_2026}. &
-  25~ns access time \cite{nasa_soa_2026} &
-  N/A\\ \hline
+  25~ns access time \cite{nasa_soa_2026}                                                                                                                                                                                                        &
+  N/A                                                                                                                                                                                                                                                                                                                                                        \\ \hline
 
-  \textbf{SDRAM} \newline (Synchronous DRAM) &
-  High-density external memory synchronized with the system clock; utilized externally by RADSAT-SK for general runtime tasks \cite{radsat_sk_obc_git}. &
-  N/A  &
-  N/A \\ \hline
+  \textbf{SDRAM} \newline (Synchronous DRAM)                                                                                                                                                                                                    &
+  High-density external memory synchronized with the system clock; utilized externally by RADSAT-SK for general runtime tasks \cite{radsat_sk_obc_git}.                                                                                         &
+  N/A                                                                                                                                                                                                                                           &
+  N/A                                                                                                                                                                                                                                                                                                                                                        \\ \hline
 
-  \textbf{DDR3} \newline (Double Data Rate 3) &
-  High-speed third-generation SDRAM; Dalhousie University’s LORIS uses 256~MB DDR3 \cite{loris_obc_pub}. &
-  13-15~ns \cite[pp. 67-70]{micron_ddr3_ds} &
-  4~GB \cite[p.1]{micron_ddr3_ds} \\ \hline
+  \textbf{DDR3} \newline (Double Data Rate 3)                                                                                                                                                                                                   &
+  High-speed third-generation SDRAM; Dalhousie University’s LORIS uses 256~MB DDR3 \cite{loris_obc_pub}.                                                                                                                                        &
+  13-15~ns \cite[pp. 67-70]{micron_ddr3_ds}                                                                                                                                                                                                     &
+  4~GB \cite[p.1]{micron_ddr3_ds}                                                                                                                                                                                                                                                                                                                            \\ \hline
 \end{longtable}
 
 \vspace{1.5em}
@@ -534,38 +535,38 @@ Volatile working memory, which loses functionality when the electrical power is 
 
 \vspace{0.5em}
 \begin{longtable}{|p{2.8cm}|p{8.8cm}|p{2.1cm}|p{2.1cm}|}
-  \caption{Non-Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:non_volatile_memory} \\ \hline
-  \textbf{Memory Type} & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \caption{Non-Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:non_volatile_memory}                                                                                                                                                                                                                                                                                                                                                \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                                                                                                                         & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
   \endfirsthead
-  \caption[]{Non-Volatile Memory Types, Metrics, Considerations, and Examples (Continued)} \\ \hline
-  \textbf{Memory Type} & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \caption[]{Non-Volatile Memory Types, Metrics, Considerations, and Examples (Continued)}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                                                                                                                         & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
   \endhead
   \hline
   \endfoot
 
-  \textbf{MRAM} \newline (Magnetoresistive) &
+  \textbf{MRAM} \newline (Magnetoresistive)                                                                                                                                                                                                                                                                                                    &
   High-endurance, radiation-tolerant non-volatile memory that relies on magnetic states to store data;typically used as internal or external storage for persistent system state. Used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}. &
   300~ns access time \cite[p.~224]{nasa_soa_2026}
-  &
+                                                                                                                                                                                                                                                                                                                                               &
   up to 8~Gb \cite{avalanche_mram_endurance_2026}
   \\ \hline
 
-  \textbf{FRAM} \newline (Ferroelectric RAM) &
-  Low-power, fast-write non-volatile memory (internal or external) that stores memory due to its ferroelectric properties; electric dipoles stay in place even without power \cite[p.~229]{nasa_soa_2023}. &
-  300~ns access time \cite[p.~224]{nasa_soa_2026} &
+  \textbf{FRAM} \newline (Ferroelectric RAM)                                                                                                                                                                                                                                                                                                   &
+  Low-power, fast-write non-volatile memory (internal or external) that stores memory due to its ferroelectric properties; electric dipoles stay in place even without power \cite[p.~229]{nasa_soa_2023}.                                                                                                                                     &
+  300~ns access time \cite[p.~224]{nasa_soa_2026}                                                                                                                                                                                                                                                                                              &
   up to 16~Mb \cite{avalanche_mram_endurance_2026}
   \\ \hline
 
-  \textbf{NAND Flash} &
-  External storage where memory cells are connected in series; deployed in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}. &
+  \textbf{NAND Flash}                                                                                                                                                                                                                                                                                                                          &
+  External storage where memory cells are connected in series; deployed in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}.                                                                                                                                                                &
   25--50~$\mu$s read access time \cite{aichiplink_nand_nor_2026}
-  &
+                                                                                                                                                                                                                                                                                                                                               &
   128~Mb--2Tb \cite{micron_nor_nand}
   \\ \hline
 
-  \textbf{NOR Flash} &
-  External storage where memory cells are connected in parallel; used by Athena \cite{athena_obc_site} and ORCASat \cite{orcasat_obc_site}. &
-  10--100~ns read access time \cite{aichiplink_nand_nor_2026} &
+  \textbf{NOR Flash}                                                                                                                                                                                                                                                                                                                           &
+  External storage where memory cells are connected in parallel; used by Athena \cite{athena_obc_site} and ORCASat \cite{orcasat_obc_site}.                                                                                                                                                                                                    &
+  10--100~ns read access time \cite{aichiplink_nand_nor_2026}                                                                                                                                                                                                                                                                                  &
   128~Mb--2~Gb \cite{micron_nor_nand}
   \\ \hline
 \end{longtable}
@@ -651,6 +652,36 @@ Non-volatile mass memory is persistent computer storage that retains stored data
 \end{longtable}
 
 [TODO: survey each class of peripherals in more detail]
+
+\section{Connections between PAY and BUS}
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{3.0cm}|p{8.0cm}|}
+  \caption{Physical connectors (surveyed from KP Labs Intuition-1 integration \cite{kplabs_2024})} \label{tab:physical_connectors}  \\ \hline
+  \textbf{Connector Type}                              &
+  \textbf{Supported Protocols}                         &
+  \textbf{Notes}                                                 \\ \hline
+  \endfirsthead
+  \caption[]{Physical connectors (Continued)}                    \\ \hline
+  \textbf{Connector Type}                              &
+  \textbf{Supported Protocols}                         &
+  \textbf{Notes}                                                 \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Nano-D Connectors                                     &
+  LVDS                                                 &
+  Used for direct high-speed data transfer (e.g., connected to X/S-band radio).  \\ \hline
+
+  M80 Connectors                                       &
+  Controller Area Network (CAN) bus                    &
+  Used to connect DPU supervisor module to platform OBC.                        \\ \hline
+
+  Samtec LSHM                                          &
+  LVDS                                                 &
+  Used for high-speed data streams (up to 8~Gbps) between optical instruments and data processing unit (DPU). \\ \hline
+\end{longtable}
 
 \section{COTS (Commercial Off the Shelf) Design Alternatives}
 
