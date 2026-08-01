@@ -61,6 +61,7 @@ In terms of sources, two major categories are surveyed:
     0.3              & July 2026     & Boris           & Protection considerations                                \\ \hline
     0.4              & July 2026     & Sayali          & Memory and periptherals                                  \\ \hline
     0.5              & July 2026     & Matthew         & PAY connectors                                           \\ \hline
+    0.6              & July 2026     & Asad            & SRS-4 integration                                        \\ \hline
   \end{tabularx}
 \end{center}
 
@@ -659,33 +660,99 @@ Below in Table~\ref{tab:physical_connectors} is a survey of the OBC integration 
 
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{|p{3.0cm}|p{3.0cm}|p{8.0cm}|}
-  \caption{Physical connectors (surveyed from KP Labs Intuition-1 integration \cite{kplabs_2024})} \label{tab:physical_connectors}  \\ \hline
-  \textbf{Connector Type}                              &
-  \textbf{Supported Protocols}                         &
-  \textbf{Notes}                                                 \\ \hline
+  \caption{Physical connectors (surveyed from KP Labs Intuition-1 integration \cite{kplabs_2024})} \label{tab:physical_connectors} \\ \hline
+  \textbf{Connector Type}           &
+  \textbf{Supported Protocols}      &
+  \textbf{Notes}                                                                                                                   \\ \hline
   \endfirsthead
-  \caption[]{Physical connectors (Continued)}                    \\ \hline
-  \textbf{Connector Type}                              &
-  \textbf{Supported Protocols}                         &
-  \textbf{Notes}                                                 \\ \hline
+  \caption[]{Physical connectors (Continued)}                                                                                      \\ \hline
+  \textbf{Connector Type}           &
+  \textbf{Supported Protocols}      &
+  \textbf{Notes}                                                                                                                   \\ \hline
   \endhead
   \hline
   \endfoot
 
-  Nano-D Connectors                                     &
-  LVDS                                                 &
-  Used for direct high-speed data transfer (e.g., connected to X/S-band radio).  \\ \hline
+  Nano-D Connectors                 &
+  LVDS                              &
+  Used for direct high-speed data transfer (e.g., connected to X/S-band radio).                                                    \\ \hline
 
-  M80 Connectors                                       &
-  Controller Area Network (CAN) bus                    &
-  Used to connect DPU supervisor module to platform OBC.                        \\ \hline
+  M80 Connectors                    &
+  Controller Area Network (CAN) bus &
+  Used to connect DPU supervisor module to platform OBC.                                                                           \\ \hline
 
-  Samtec LSHM                                          &
-  LVDS                                                 &
-  Used for high-speed data streams (up to 8~Gbps) between optical instruments and data processing unit (DPU). \\ \hline
+  Samtec LSHM                       &
+  LVDS                              &
+  Used for high-speed data streams (up to 8~Gbps) between optical instruments and data processing unit (DPU).                      \\ \hline
 \end{longtable}
 
 [TODO: review more examples]
+
+\section{SRS-4 Integration}
+
+The Satlab SRS-4 is a flagship software-defined S-band transceiver designed for
+CubeSat high-speed communications \cite{satlab_srs4}. The SRS-4 serves as a
+primary communications radio to support high-throughput payload downlink
+requirements (such as large hyperspectral image files) alongside housekeeping
+telemetry and telecommand handling.
+
+The transceiver functions as the satellite's primary voice-and-data translator
+between the On-Board Computer (OBC) and the RF antenna array. Satlab
+manufactures the SRS-4 board using the PC/104 form factor ($93.0 \times 87.2
+\times 17.5$~mm, mass 253~g), allowing direct mechanical integration into
+standard CubeSat stackups via PC/104 header connectors and standoffs alongside
+EPS and OBC modules.
+
+Unlike legacy fixed-function analog radios, the SRS-4 utilizes a
+Software-Defined Radio (SDR) architecture with on-orbit reconfigurable
+modulation and full-duplex operation, enabling simultaneous transmission and
+reception (requiring strict RF isolation between TX and RX paths).
+
+\subsection{Electrical and Logical Interfacing}
+The logical and protocol fabric of the SRS-4 natively integrates with standard
+Command \& Data Handling (C\&DH) firmware architectures:
+\begin{itemize}
+  \item \textbf{CubeSat Space Protocol (CSP):} C\&DH software running real-time
+  operating systems (e.g., FreeRTOS) for task management can use CSP as a
+  network-layer protocol. The SRS-4 speaks CSP natively. Operating like a
+  lightweight IP/UDP stack, CSP assigns node addresses to subsystems (OBC, EPS,
+  ADCS, Radio) and routes packets using port-based services regardless of
+  underlying physical media (CAN-bus, RS-422, I2C, or Ethernet). Flight software
+  can issue commands such as \texttt{csp\_send(node=radio, port=downlink, data)}
+  agnostically across buses.
+  \item \textbf{Interfacing Links:}
+        \begin{itemize}
+          \item \textbf{OBC $\leftrightarrow$ SRS-4:} CAN-bus or RS-422
+          differential bus carrying CSP packets.
+          \item \textbf{EPS $\leftrightarrow$ SRS-4:} Wide-input power rail
+          ($5.1$--$28.8$~V), granting flexibility to EPS regulation strategies.
+          \item \textbf{SRS-4 $\leftrightarrow$ Antenna:} SMA/MCX coaxial
+          pigtail point-to-point RF link.
+          \item \textbf{Antenna $\leftrightarrow$ Ground:} Free-space S-band RF
+          link ($2200$--$2290$~MHz downlink, $2025$--$2110$~MHz uplink).
+        \end{itemize}
+\end{itemize}
+
+\subsection{Subsystem Team Responsibilities}
+Integrating the SRS-4 into a satellite design spans multiple engineering
+domains:
+\begin{itemize}
+  \item \textbf{Electrical Subsystem:} Mechanically slots the SRS-4 board into
+  the PC/104 stack and wires the physical CAN/RS-422 bus and EPS power
+  connections.
+  \item \textbf{C\&DH Subsystem:} Provides the RTOS and CSP network fabric where
+  the SRS-4 operates as a standard CSP node on the system bus.
+  \item \textbf{Firmware Team:} Develops device drivers using Satlab's support
+  library to queue image payload downlinks, adjust TX power, and poll
+  operational telemetry (temperature, current draw, lock status).
+  \item \textbf{Power (EPS) Subsystem:} Manages the input power supply rail,
+  leveraging the SRS-4's broad $5.1$--$28.8$~V input range.
+  \item \textbf{Mission Operations Team:} Utilizes CCSDS-compliant coding and
+  standard PSK modulations to interface with commercial ground station networks
+  and feed telemetry directly into the mission control framework.
+\end{itemize}
+
+
 
 \section{COTS (Commercial Off the Shelf) Design Alternatives}
 
