@@ -486,6 +486,106 @@ Consequently, interface selection should balance throughput with connector
 capability, harness length, routing, and signal-integrity constraints rather
 than relying on nominal data rate alone \cite{ecss_spacewire,ecss_spacefibre}.
 
+
+The following table summarizes candidate ADCS–spacecraft bus integration architectures.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{0.20\textwidth}|p{0.40\textwidth}|p{0.34\textwidth}|}
+\caption{Candidate ADCS--Spacecraft Bus Integration Architectures}
+\label{tab:adcs_bus_integration}\\
+\hline
+\textbf{Bus integration architecture} &
+\textbf{Description} &
+\textbf{Example designs} \\
+\hline
+\endfirsthead
+
+\multicolumn{3}{c}%
+{{\tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{Bus integration architecture} &
+\textbf{Description} &
+\textbf{Example designs} \\
+\hline
+\endhead
+
+\hline
+\multicolumn{3}{r}{{Continued on next page}} \\
+\endfoot
+
+\hline
+\endlastfoot
+
+\textbf{Standalone ADCS connected to the spacecraft bus}
+&
+The ADCS is a separate subsystem with its own processor and control software. 
+The spacecraft OBC sends commands and receives telemetry through a data 
+interface, while the ADCS independently performs attitude estimation and 
+control. Power is normally supplied separately by the EPS rather than through 
+the communications bus.
+&
+\textbf{CubeSpace CubeADCS Gen 2:} separate ADCS connected to the client OBC 
+through CAN, UART, I\textsuperscript{2}C, RS-422, or RS-485; CubeSpace 
+recommends connecting at least CAN and UART \cite[pp.~15--16]{cubespace_cubeadcs_gen2}.
+ A second CAN interface connects the ADCS computer to internal sensor and 
+ actuator nodes \cite[p.~17]{cubespace_cubeadcs_gen2}. The PC/104-format OBC, 
+ EPS, and ADCS interface is documented in the connector pinout 
+ \cite[pp.~21--22]{cubespace_cubeadcs_gen2}.
+\\
+\hline
+
+\textbf{ADCS integrated into the bus OBC}
+&
+The primary OBC executes the ADCS software and directly interfaces with attitude
+ sensors and actuator-driving electronics. This reduces processor and board count, 
+ but attitude control becomes dependent on the OBC's availability, scheduling, 
+ and fault recovery.
+&
+\textbf{GomSpace NanoMind A3200:} CubeSat and nanosatellite OBC incorporating a
+ three-axis magnetometer, three-axis gyroscope, and three bidirectional PWM 
+ outputs intended for external magnetorquers \cite[pp.~4, 6]{gomspace_nanomind_a3200}.
+  Its subsystem interfaces include CAN, I\textsuperscript{2}C, UART, and SPI \cite[pp.~4--5]{gomspace_nanomind_a3200}.
+\\
+\hline
+
+\textbf{Combined bus computer and ADCS module}
+&
+One avionics assembly contains an autonomous ADCS controller together with an
+ additional processor that may perform OBC or payload-processing functions. The
+  functions may share the same mechanical enclosure without necessarily sharing 
+  the same processor.
+&
+\textbf{AAC Clyde Space iADCS400:} autonomous ADCS that can house an optional
+ CP400 OBC or payload processor within the same assembly. The system provides
+  a standard I\textsuperscript{2}C interface and optional RS-422, RS-485, UART, 
+  and CAN interfaces \cite[p.~1]{aac_iadcs400}.
+\\
+\hline
+
+\textbf{Distributed bus architecture}
+&
+ADCS functions are divided among a central controller and intelligent remote
+ sensors or actuators. Peripheral devices perform local sensing, processing, or
+  low-level control and communicate with the central ADCS computer through one
+   or more subsystem buses.
+&
+\textbf{CubeSpace CubeADCS Gen 2:} uses a dedicated internal CAN interface for
+ connected sensor and actuator nodes \cite[pp.~17, 22]{cubespace_cubeadcs_gen2}.
+
+\textbf{Rocket Lab ST-16RT2:} star tracker containing an onboard processor and
+ star catalogue; it outputs attitude quaternions and angular rates and uses two
+  half-duplex RS-485 command and telemetry interfaces \cite[p.~1]{rocketlab_st16rt2}.
+
+\textbf{GomSpace NanoSense M315:} remote nanosatellite magnetometer with an
+ I\textsuperscript{2}C interface, intended for placement away from magnetic
+  disturbance sources \cite[p.~4]{gomspace_nanosense_m315}.
+\\
+\hline
+
+\end{longtable}
+
+
+
 \section{Peripherals}
 
 This section reviews the common peripherals that are found on OBCs surveyed by
