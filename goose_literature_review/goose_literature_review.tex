@@ -656,6 +656,26 @@ Non-volatile mass memory is persistent computer storage that retains stored data
 
 \section{Connections between PAY and BUS}
 
+Integration with PAY is probably the most significant aspect of the OBC design
+since supporting the PAY is necessary for the success of the mission in any
+capacity. The design should be generic enough to fit a wide array of payloads,
+therefore commecial standalone OBCs are considered during the review since these
+are essentially what we strive to mimic with our design. The following
+considerations are of interest:
+
+\begin{enumerate}
+  \item \textbf{Data and control communication throughputs} -- that is, at what
+        rate the OBC and PAY can exchange data.
+  \item \textbf{Buffers} -- that is, how much spare volatile and non-volatile
+        memory the OBC provides to PAY to store its telemetry and mission data,
+        as well as the OBC's own data.
+  \item \textbf{Transfer mechanism} -- that is, how PAY will request the OBC to
+        let it access the data for read or write, and how it will be notified of
+        other control-level events.
+\end{enumerate}
+
+A comprehensive survey of commercial OBC platforms and their payload integration parameters is provided in Appendix~\ref{sec:appendix_b} (Table~\ref{tab:appendix_b_commercial_obcs}).
+
 Below in Table~\ref{tab:physical_connectors} is a survey of the OBC integration done by KP Labs.
 
 \renewcommand{\arraystretch}{1.15}
@@ -699,7 +719,7 @@ telemetry and telecommand handling.
 The transceiver functions as the satellite's primary voice-and-data translator
 between the On-Board Computer (OBC) and the RF antenna array. Satlab
 manufactures the SRS-4 board using the PC/104 form factor ($93.0 \times 87.2
-\times 17.5$~mm, mass 253~g), allowing direct mechanical integration into
+  \times 17.5$~mm, mass 253~g), allowing direct mechanical integration into
 standard CubeSat stackups via PC/104 header connectors and standoffs alongside
 EPS and OBC modules.
 
@@ -713,23 +733,23 @@ The logical and protocol fabric of the SRS-4 natively integrates with standard
 Command \& Data Handling (C\&DH) firmware architectures:
 \begin{itemize}
   \item \textbf{CubeSat Space Protocol (CSP):} C\&DH software running real-time
-  operating systems (e.g., FreeRTOS) for task management can use CSP as a
-  network-layer protocol. The SRS-4 speaks CSP natively. Operating like a
-  lightweight IP/UDP stack, CSP assigns node addresses to subsystems (OBC, EPS,
-  ADCS, Radio) and routes packets using port-based services regardless of
-  underlying physical media (CAN-bus, RS-422, I2C, or Ethernet). Flight software
-  can issue commands such as \texttt{csp\_send(node=radio, port=downlink, data)}
-  agnostically across buses.
+        operating systems (e.g., FreeRTOS) for task management can use CSP as a
+        network-layer protocol. The SRS-4 speaks CSP natively. Operating like a
+        lightweight IP/UDP stack, CSP assigns node addresses to subsystems (OBC, EPS,
+        ADCS, Radio) and routes packets using port-based services regardless of
+        underlying physical media (CAN-bus, RS-422, I2C, or Ethernet). Flight software
+        can issue commands such as \texttt{csp\_send(node=radio, port=downlink, data)}
+        agnostically across buses.
   \item \textbf{Interfacing Links:}
         \begin{itemize}
           \item \textbf{OBC $\leftrightarrow$ SRS-4:} CAN-bus or RS-422
-          differential bus carrying CSP packets.
+                differential bus carrying CSP packets.
           \item \textbf{EPS $\leftrightarrow$ SRS-4:} Wide-input power rail
-          ($5.1$--$28.8$~V), granting flexibility to EPS regulation strategies.
+                ($5.1$--$28.8$~V), granting flexibility to EPS regulation strategies.
           \item \textbf{SRS-4 $\leftrightarrow$ Antenna:} SMA/MCX coaxial
-          pigtail point-to-point RF link.
+                pigtail point-to-point RF link.
           \item \textbf{Antenna $\leftrightarrow$ Ground:} Free-space S-band RF
-          link ($2200$--$2290$~MHz downlink, $2025$--$2110$~MHz uplink).
+                link ($2200$--$2290$~MHz downlink, $2025$--$2110$~MHz uplink).
         \end{itemize}
 \end{itemize}
 
@@ -738,18 +758,18 @@ Integrating the SRS-4 into a satellite design spans multiple engineering
 domains:
 \begin{itemize}
   \item \textbf{Electrical Subsystem:} Mechanically slots the SRS-4 board into
-  the PC/104 stack and wires the physical CAN/RS-422 bus and EPS power
-  connections.
+        the PC/104 stack and wires the physical CAN/RS-422 bus and EPS power
+        connections.
   \item \textbf{C\&DH Subsystem:} Provides the RTOS and CSP network fabric where
-  the SRS-4 operates as a standard CSP node on the system bus.
+        the SRS-4 operates as a standard CSP node on the system bus.
   \item \textbf{Firmware Team:} Develops device drivers using Satlab's support
-  library to queue image payload downlinks, adjust TX power, and poll
-  operational telemetry (temperature, current draw, lock status).
+        library to queue image payload downlinks, adjust TX power, and poll
+        operational telemetry (temperature, current draw, lock status).
   \item \textbf{Power (EPS) Subsystem:} Manages the input power supply rail,
-  leveraging the SRS-4's broad $5.1$--$28.8$~V input range.
+        leveraging the SRS-4's broad $5.1$--$28.8$~V input range.
   \item \textbf{Mission Operations Team:} Utilizes CCSDS-compliant coding and
-  standard PSK modulations to interface with commercial ground station networks
-  and feed telemetry directly into the mission control framework.
+        standard PSK modulations to interface with commercial ground station networks
+        and feed telemetry directly into the mission control framework.
 \end{itemize}
 
 
@@ -1265,8 +1285,416 @@ design decisions for this subsystem.
     ARM926EJ-S                                                                                                                                                                                                                                                                        &
                                                                                                                                                                                                                                                                                       &
                                                                                                                                                                                                                                                                                       &
-    Embedded memory type: SDRAM. Uses ISISpace satellite-subsystems libraries, contains MMU, designed to interface with external SDRAM.                                                                                                                                               &
     \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
+  \end{longtable}
+\end{landscape}
+\clearpage
+\begin{landscape}
+  \section{Appendix B: Commercial OBC Payload Integration Survey} \label{sec:appendix_b}
+
+  Table~\ref{tab:appendix_b_commercial_obcs} surveys commercial OBC and payload computing platforms with respect to data and control communication throughputs, volatile/non-volatile buffering, transfer mechanisms, and event notification interfaces. The performance and specification confidence level of figures listed in Table~\ref{tab:appendix_b_commercial_obcs} are categorized according to the notation in Table~\ref{tab:appendix_b_notation}.
+
+  \begin{table}[h!]
+    \centering
+    \caption{Throughput and Performance Data Notation}
+    \label{tab:appendix_b_notation}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{|c|l|}
+      \hline
+      \textbf{Mark} & \textbf{Meaning}
+      \\ \hline
+      {[}M{]}       & Measured end-to-end or application-level throughput                                      \\
+      \hline
+      {[}S{]}       & Product-specific rate stated by the manufacturer
+      \\ \hline
+      {[}N{]}       & Nominal line rate implied by an interface name, such as
+      Gigabit Ethernet                                                                                         \\ \hline
+      {[}L{]}       & Latency figure rather than throughput
+      \\ \hline
+      {[}U{]}       & Undisclosed --- interface is present, but its usable or configured rate is not published
+      \\ \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{1em}
+
+  \renewcommand{\arraystretch}{1.25}
+  \begin{longtable}{|p{3.2cm}|p{4.5cm}|p{4.5cm}|p{4.5cm}|p{5.5cm}|}
+    \caption{Commercial OBC and Payload Computer Integration Survey} \label{tab:appendix_b_commercial_obcs}                                                    \\ \hline
+    \textbf{OBC or Payload Computer}                                   &
+    \textbf{Payload Data Throughput}                                   &
+    \textbf{Control Throughput \& Event Interfaces}                    &
+    \textbf{Volatile \& Non-Volatile Buffering}                        &
+    \textbf{Transfer, Request, \& Notification Mechanism}                                                                                                      \\ \hline
+    \endfirsthead
+    \caption[]{Commercial OBC and Payload Computer Integration Survey
+      (Continued)}
+    \\ \hline
+    \textbf{OBC or Payload Computer}                                   &
+    \textbf{Payload Data Throughput}                                   &
+    \textbf{Control Throughput \& Event Interfaces}                    &
+    \textbf{Volatile \& Non-Volatile Buffering}                        &
+    \textbf{Transfer, Request, \& Notification Mechanism}                                                                                                      \\ \hline
+    \endhead
+    \hline
+    \endfoot
+
+    GomSpace NanoMind HP MK3 \cite{gomspace_nanomind_hp_mk3_ds}        &
+    Three independent full-duplex SpaceWire payload links. Vendor iperf3 tests
+    at the network layer with MTU 9000 report 150~Mbit/s for one unidirectional
+    interface [M], 150~Mbit/s aggregate for three unidirectional interfaces [M],
+    and 80~Mbit/s aggregate for three bidirectional interfaces [M]. RS-422 TCP
+    throughput is 3~Mbit/s through the processing system [M] and 2.2~Mbit/s
+    through programmable logic [M]. Storage tests report approximately 23~MB/s
+    read and 21~MB/s write for one eMMC [M], or 45~MB/s read and 41~MB/s write
+    when striped [M].                                                  &
+    Two CAN buses, $\text{I}^2\text{C}$, differential PPS and reference-clock
+    inputs, RS-422, and USB 2.0 host/device are exposed, but public CAN and
+    $\text{I}^2\text{C}$ rates are not stated [U]. The supplied
+    $\text{I}^2\text{C}$ software supports attached slave devices but not
+    multi-master operation or CSP over that interface.                 &
+    1~GB DDR3, reduced to 512~MB usable data memory when ECC is enabled; 256~MB
+    NOR flash; 70~GB pSLC eMMC and 233~GB MLC eMMC. The storage can be
+    configured using logical-volume arrangements such as striping or mirroring.
+    These are installed capacities, not stated payload reservations.
+                                                                       & SpaceWire endpoints are implemented in the Zynq programmable logic.
+    Payload data is presented through network interfaces and software drivers,
+    and the datasheet separately benchmarks processing-system and
+    programmable-logic RS-422 paths. The Zynq architecture permits memory
+    transfers between programmable logic and system memory, but the product
+    datasheet does not disclose the shipped DMA-channel mapping, descriptor
+    format, queue ownership, cache-coherency policy, or whether the SpaceWire
+    software path is zero-copy.
+    \\ \hline
+
+    AAC Clyde Space Sirius QuadCore \cite{aac_sirius_quadcore_ds}      &
+    Four SpaceWire ports with a vendor figure of ``up to 300~Mbit'' through the
+    inbuilt router [S]. The public document does not say whether this is
+    per-port throughput, aggregate router throughput, or a nominal configuration
+    limit.                                                             &
+    Two CAN 2.0B buses are used for low-level commanding and monitoring [U]. The
+    unit also exposes an RS-422 UART, SPI, and nine GPIO signals, without
+    published rates. AAC explicitly describes CAN as the low-level control path
+    and the SpaceWire router as the fast payload/subsystem path.       & 4~Gbit SDRAM
+    for data plus 2~Gbit for EDAC, 2~Mbit MRAM boot memory, 256~Mbit SPI flash
+    image memory, and a 2~MiB L2 cache. The product sheet does not identify a
+    payload-reserved fraction.                                         & This is a clear
+    dual-plane architecture: payload data travels through the SpaceWire router,
+    while CAN carries commands and monitoring messages. Software may run Linux
+    or RTEMS. No public information identifies whether SpaceWire-to-SDRAM
+    movement uses a dedicated DMA engine, CPU copies, router-local buffering, or
+    a mixture of these.
+    \\ \hline
+
+    AAC Clyde Space Sirius TCM LEON3FT \cite{aac_sirius_tcm_ds,
+    aac_sirius_tcm_kit_ds, ecss_rmap_std}                              &
+    Two SpaceWire interfaces at 50~Mbit/s [S]. The development-kit datasheet
+    explicitly lists RMAP support \cite{ecss_rmap_std}, making this one of the
+    clearer commercial examples of remote payload-memory access over SpaceWire.
+                                                                       & Three RS-422/485 UARTs, two additional RS-485-only UARTs, an RS-485 PPS
+    input, twelve GPIO, S- and X-band transceiver command/housekeeping channels,
+    and twelve RS-422 pulse-command outputs are provided; serial baud rates are
+    not disclosed [U].                                                 & 64~MB SDRAM after EDAC, 16~kB NVRAM after EDAC, 2~GB
+    system NAND after EDAC, and 32~GB mass-memory storage after EDAC.
+                                                                       & The TCM is specifically described as receiving and storing payload and
+    housekeeping data, distributing telecommands, and serving mass-memory data
+    to the transceiver. With RMAP \cite{ecss_rmap_std}, another SpaceWire node
+    can issue reads and writes to exposed memory, registers, FIFOs, or
+    mailboxes; pulse outputs provide an independent low-level command/event
+    mechanism. The public material does not expose the actual RMAP address map,
+    access-control rules, maximum transaction size, queue depth, or number of
+    simultaneously outstanding transactions.
+    \\ \hline
+
+    EnduroSat Onboard Computer \cite{endurosat_obc_ds, libcsp_basics}  &
+    100BASE-TX Ethernet $\rightarrow$ 100~Mbit/s nominal [N]. CAN-FD, RS-422,
+    RS-485, SPI, $\text{I}^2\text{C}$, and UART payload interfaces are present,
+    but their configured or achieved product-level rates are not published [U].
+                                                                       & Two CAN buses operate at 1~Mbit/s using CSP-ES [S] \cite{libcsp_basics}.
+    Sixteen payload enable, disable, and feedback GPIO signals and a
+    single-ended PPS signal provide discrete control, status, and
+    synchronization paths.                                             &
+    2~MB program flash, two 16~GB embedded SD-NAND devices, and two 2~MB FRAM
+    devices with ECC capability. The public page does not state the volatile
+    SRAM capacity or how much NAND/FRAM is available to payload applications.
+                                                                       & Packetized command and control is supplied through CSP-ES over CAN
+    \cite{libcsp_basics}. The flight-management software includes drivers,
+    housekeeping, logging, scheduling, tasking, compression, and archiving,
+    while direct GPIO provides payload power-control and feedback events. No
+    public DMA topology, queue API, payload file-service API, or
+    interrupt-completion model is documented.
+    \\ \hline
+
+    Spacemanic Deep Thought \cite{spacemanic_deep_thought_ds,
+    microchip_sam_v71_ds, libcsp_basics}                               &
+    External SPI is typically 40~MHz [S]. RMII and USB signals are exposed, but
+    the product datasheet gives no achieved Ethernet or USB throughput [U].
+                                                                       & CSP over CAN up to 1~Mbit/s [S] \cite{libcsp_basics}; CSP over
+    $\text{I}^2\text{C}$ up to 400~kHz [S]; CSP over RS-485/KISS up to
+    115,200~baud [S]; isolated $\text{I}^2\text{C}$ up to 400~kHz [S]. GPIO,
+    PWM, ADC, clock, and PPS-capable pins provide discrete events and timing.
+                                                                       & The SAMV71 family \cite{microchip_sam_v71_ds} provides up to 384~kB
+    on-chip SRAM. The board includes three 1~MiB FRAM devices and four 32~MiB
+    flash devices; Spacemanic explicitly says all seven external memories are
+    available for mission-specific software.                           & CAN is
+    implemented using the SAMV71's integrated MCAN peripheral followed by an
+    external CAN transceiver; it is not a separate external CAN-controller IC.
+    SPI, $\text{I}^2\text{C}$, GPIO, and RMII signals connect directly to the
+    MCU. The SAMV71 \cite{microchip_sam_v71_ds} silicon includes a 24-channel
+    central XDMAC and MCAN controllers with SRAM-based mailboxes, so
+    DMA-assisted peripheral transfers are architecturally possible; however, the
+    OBC datasheet does not say which supplied drivers use DMA or whether CAN
+    frames are copied from message RAM by the CPU.
+    \\ \hline
+
+    Spacemanic Eddie \cite{spacemanic_eddie_ds, libcsp_basics}         &
+    External payload SPI up to 16~MHz [S].
+                                                                       & CSP over CAN up to 1~Mbit/s [S] \cite{libcsp_basics}; CSP over
+    $\text{I}^2\text{C}$ up to 400~kHz [S]; CSP over RS-485/KISS up to
+    38,400~baud [S]. GPIO, PWM, ADC, PPS, and a pin labelled DMA TRIG are
+    exposed.                                                           & No separate large
+    volatile payload RAM is advertised. Six 1~MB FRAM devices are all available
+    to mission software, and the example firmware can combine them as one FatFs
+    disk.                                                              & Unlike Deep Thought, Eddie uses an external
+    MCP25625 CAN controller connected to the MCU through SPI. The controller
+    provides an interrupt signal and receive-buffer-full signals, which notify
+    the MCU that CAN data or an event requires servicing. The public datasheet
+    identifies a DMA TRIG connector pin but does not define its transaction
+    protocol, destination buffer, handshake, or relationship to the CAN
+    controller.
+    \\ \hline
+
+    Xiphos Q8/Q8S \cite{xiphos_q8_ds}                                  &
+    Gigabit Ethernet gives 1~Gbit/s nominal [N]. USB 3.1 Gen 1, USB 2.0, 64
+    LVDS pairs, and three gigabit transceivers for interfaces such as SATA or
+    PCIe are available, but achieved payload throughput is not published [U].
+                                                                       & A CAN controller is implemented in programmable logic.
+    Factory-selectable RS-232/422/485, GPIO/MIO, and RTC wake/alarm interrupt
+    facilities are also provided, without public rates [U].            & 4~GB LPDDR4 with
+    EDAC, two 256~MB QSPI NOR devices, and two independent 128~GB eMMC devices
+    with separately controlled buses and power.                        & Payload interfaces
+    are accessed through standard Linux/Xilinx drivers or Xiphos custom
+    drivers; programmable logic can host mission-specific interface and
+    preprocessing logic. The public sheet does not disclose DMA topology,
+    descriptor rings, payload buffer allocation, measured storage bandwidth,
+    or whether the independent eMMC devices can be sustained concurrently at a
+    stated rate.
+    \\ \hline
+
+    Unibap iX10-101 \cite{unibap_ix10_101_ds}                          &
+    Two 10GBASE-T ports $\rightarrow$ 10~Gbit/s per port nominal [N]. The unit
+    also provides two Camera Link Base interfaces, two SpaceWire ports, two USB
+    3.0 ports, and one USB 2.0 port, with no achieved product-level rates
+    published for those interfaces [U].
+                                                                       & CAN 2.0/FD, two $\text{I}^2\text{C}$ interfaces, PPS/proprietary PLET
+    timing, one RS-232 port, and four RS-485/422 ports are provided without
+    published configured rates [U].                                    & 24~GB DDR4 ECC
+    associated with the CPU/GPU system, two 4~TB NVMe SSDs, and one 128~GB SATA
+    SSD. These are installed capacities rather than stated payload reservations.
+                                                                       & The vendor's architecture depicts sensors feeding FPGA-based data
+    acquisition, followed by CPU orchestration, GPU/VPU processing, and storage
+    used as both a buffer and long-term store before data is delivered to the
+    spacecraft bus, OBC, or communications system. This is strongly suggestive
+    of a DMA-oriented streaming architecture, but the public document does not
+    identify the DMA engines, descriptor format, backpressure mechanism, or
+    payload software API.                                                                                                                                      \\ \hline
+
+    KP Labs Antelope \cite{kplabs_antelope_ds}                         &
+    1 Gb Ethernet $\rightarrow$ 1~Gbit/s nominal [N]. LVDS or GTH transceivers,
+    USB 3.0, USB 2.0, and SATA are also available, but achieved rates are not
+    disclosed [U].                                                     & CAN, $\text{I}^2\text{C}$, SPI, RS-422/485,
+    UART, GPIO, and GPS PPS are present without product-level rates [U].
+                                                                       & 8~GB DDR4 with ECC, 4~GB SLC NAND, and optional SATA SSD storage.
+                                                                       & The Zynq UltraScale+ combines application processors, real-time
+    processors, and FPGA fabric for custom functions; software can run 64-bit
+    Linux or bare metal. This enables several possible payload-access
+    models---device drivers, memory-mapped FPGA registers, DMA streams, or
+    shared-memory queues---but the vendor does not publicly specify which are
+    supplied as standard payload services.
+    \\ \hline
+
+    CesiumAstro SBC-1461 \cite{cesiumastro_sbc_1461_ds}                &
+    Two 10GBASE-KR ports $\rightarrow$ 10~Gbit/s each nominal [N], two
+    100BASE-TX ports $\rightarrow$ 100~Mbit/s each nominal [N], plus SGMII and
+    USB 3.0 [U].                                                       & Two RS-422/485 channels, SPI with two
+    chip-selects, UART, JTAG, and IEEE-1588 time synchronization are provided
+    without public application-level rates [U].                        & 2~GB ECC SDRAM, with an
+    option for 4~GB or more; 8~GB eMMC; and redundant 64~MB boot flash with
+    automatic failover.                                                & The product advertises
+    traffic routing and encryption without loading the processor cores,
+    indicating hardware offload for portions of the data path, and includes a
+    Linux SDK. However, the available detailed public sheet is dated 2022 and
+    does not expose the payload API, DMA engines, queue organization, measured
+    end-to-end throughput, or payload-reserved memory.
+    \\ \hline
+
+    AAC Clyde Space Kryten-M3 \cite{aac_kryten_m3_ds}                  &
+    Twenty LVDS lines, three QSPI interfaces---two using LVDS signalling and one
+    using 3.3~V logic---and one SPI controller with seven chip-select lines.
+    Product-level rates: [U]. The LVDS lines are physical signalling resources
+    rather than a defined packet protocol in the public specification.
+                                                                       & One CAN interface, two $\text{I}^2\text{C}$ interfaces, eight UARTs, one
+    RS-422 interface that can instead be configured as two RS-485 links, GPIO
+    and DTMF. Rates: [U].                                              & Volatile: embedded SRAM/cache capacity is not
+    stated publicly [U]. Non-volatile: 16~MB MRAM and 4~GB SLC flash; the boot
+    configuration is listed as 256~kB eNVM plus 8~MB MRAM.
+                                                                       & SmartFusion2 integrates the Cortex-M3 and FPGA fabric. RTEMS,
+    EDAC-protected memories, hardware recovery, Reed--Solomon and cryptographic
+    acceleration are provided. Payload communication is therefore
+    software/driver mediated, with FPGA logic available for custom interfacing.
+    Public material does not disclose DMA request mappings, FIFO depths,
+    interrupt semantics, or whether LVDS/QSPI transfers can be performed
+    zero-copy.
+    \\ \hline
+
+    Pumpkin PPM family \cite{pumpkin_ppm_a3_ds}                        &
+    No uniform family-wide data interface exists. Individual PPMs expose the
+    selected MCU or DSP peripherals through the Pumpkin motherboard, including
+    SPI, serial interfaces, GPIO and variant-specific external buses. Rates:
+    [U]. Figures such as the D1's 32~MHz clock or 16~MIPS performance are
+    processor figures, not payload-link throughput.
+                                                                       & $\text{I}^2\text{C}$, UART, SPI, GPIO and hardware radio-handshake signals
+    are available in various configurations. Availability and pin mapping depend
+    on the PPM and motherboard combination. Rates: [U].
+                                                                       & Volatile: MCU-internal RAM and motherboard-dependent expansion; no common
+    family value. Non-volatile: MCU flash plus variant-specific storage. The PPM
+    D1, for example, includes 64~Mbit (8~MB) of external serial flash; the
+    flight motherboard can provide additional mass-storage functions.  & The PPM
+    is a replaceable processor module that maps MCU I/O to a common motherboard
+    architecture. Payload access is consequently through ordinary MCU peripheral
+    drivers, polling, interrupts or any DMA supported by the selected MCU. There
+    is no family-wide published DMA, message-buffer or shared-memory
+    architecture.
+    \\ \hline
+
+    C3S Electronics OBC \cite{c3s_obc_ds, c3s_3u_platform_ds}          &
+    Four M-LVDS channels arranged as two cold-redundant pairs. C3S platform
+    documentation identifies one redundant pair for communications equipment and
+    one pair for the payload. M-LVDS rate: [U].
+                                                                       & Two CAN interfaces forming one cold-redundant command-bus pair. CAN rate:
+    [U].                                                               & Volatile: 384~kB internal RAM. Program
+    storage: 2~MB internal flash. Non-volatile daughterboard: 16~MB
+    radiation-resistant MRAM and 16~GB eMMC.                           &
+    This is one of the clearest public examples of an explicit command/data
+    split: CAN is used as the command bus and M-LVDS as the payload data bus.
+    The interfaces and memories are cold-redundant at platform level. Public
+    documentation does not state the M-LVDS framing protocol, flow control, DMA
+    path, FIFO capacity, payload file API, or failover timing.
+    \\ \hline
+
+    SkyLabs NANOobc-2 \cite{skylabs_nanoobc_2_ds}                      &
+    Two ``high-speed'' LVDS interfaces, alternatively configurable as
+    RS-422/RS-485. Verified product-specific rate: [U]. Some mirrored
+    documentation reports 20~Mbit/s for LVDS [S], but that figure is not clearly
+    stated on the current public manufacturer page.
+                                                                       & Redundant CAN-TS for telemetry and telecommand; eight multifunction GPIOs
+    can support UART, SPI, TWI and an onboard-time trigger. Rates: [U].
+                                                                       & Published revisions/listings conflict [U]. Values include 1--2~MB SRAM,
+    2--4~MB MRAM, a 4~Mbit telemetry NVM, and redundant NAND described variously
+    as 2~Gbit or 2~GB.                                                 & The
+    NANOsky CMM software provides CAN-TS and LVDS-TS stacks, permanent-storage
+    management, redundancy management, housekeeping acquisition, FDIR, software
+    scrubbing and firmware update. The PicoSkyFT architecture includes
+    prioritized interrupts and fault traps. Public sources do not specify DMA;
+    the documented model is primarily interrupt-, driver- and FDIR-managed
+    communication.
+    \\ \hline
+
+    SPiN MA61C \cite{spin_ma61c_ds, spin_esa_pres}                     &
+    CubeSat and SmallSat configurations provide two SpaceWire interfaces.
+    SpaceWire rate: [U]. The product is intended to route and translate payload
+    and subsystem data rather than act only as a conventional processor board.
+                                                                       & Depending on the configuration: CAN, $\text{I}^2\text{C}$, SPI, RS-422,
+    RS-485, RS-232, GPIO and MIL-STD-1553B. The ESA presentation reports a
+    system response time below 1~ms [L], but does not report sustained link
+    throughput [U].                                                    & Current vendor page lists 64~Mbit (8~MB) SRAM
+    and 64~Mbit (8~MB) flash. Some distributor material additionally lists
+    3~Gbit SDRAM.                                                      & MA61C stores device drivers
+    and electronic data sheets, scans interfaces, recognizes connected
+    equipment, self-configures, installs/selects drivers, buffers data, and
+    routes or converts traffic between interfaces. Its software uses data-link,
+    network and transport abstraction layers.
+    \\ \hline
+
+    Argotec FERMI OBC\&DH \cite{argotec_fermi_ds}                      &
+    SpaceWire and LVDS are publicly listed as payload-capable high-speed
+    interfaces. Rates: [U].                                            & RS-422, SPI, $\text{I}^2\text{C}$ and GPIO
+    are listed for lower-rate equipment and control integration. Rates: [U].
+                                                                       & A current secondary product listing gives 256~MB SDRAM, 20~Mbit plus
+    5~Mbit EEPROM, and 16~GB ECC-corrected mass memory.
+                                                                       & A dual-core LEON3FT, fault-tolerant memory controller and Microchip RTG4
+    FPGA combine software processing with FPGA acceleration. Public sources do
+    not identify DMA channels, SpaceWire receive-buffer depths, descriptor
+    formats, interrupt routing or payload-access APIs.
+    \\ \hline
+
+    SatRev OBC \cite{satrev_space_site, nasa_soa_2023}                 &
+    Interfaces and rates: [U]. SatRev's public website currently emphasizes
+    complete spacecraft and hosted payload services rather than exposing an OBC
+    product datasheet.                                                 & Interfaces and rates: [U].
+                                                                       & Volatile and non-volatile memory: [U].
+                                                                       & NASA's survey identifies a quad-core Cortex-A72 processor at 1.5~GHz and
+    gives board-level power figures, but does not provide a payload ICD,
+    interface list, buffer architecture or transfer mechanism.
+    \\ \hline
+
+    Resilient Computing RadPC-SBC-001 \cite{nasa_soa_2026}             &
+    Payload interfaces and rates: [U].
+                                                                       & Control interfaces and rates: [U].
+                                                                       & Volatile and non-volatile memory: [U].
+                                                                       & NASA describes a 32-bit RISC-V processor implemented in an AMD Artix-7
+    FPGA with COTS single-event-effect mitigation. No public payload-interface
+    map, DMA implementation, shared-memory model or event-notification mechanism
+    was located.
+    \\ \hline
+
+    Andes OBC \cite[p.~236]{nasa_soa_2024}\cite[p.~250]{nasa_soa_2026} &
+    Public commercial listings mention $\text{I}^2\text{C}$, SPI and UART, but
+    no clearly identified high-rate payload link or numeric rate was located.
+    Rates: [U].                                                        & $\text{I}^2\text{C}$, SPI and UART can provide
+    command/control integration. Rates: [U].
+                                                                       & Full cold redundancy is stated for the OBC, MRAM and NAND, but installed
+    memory capacities are not disclosed publicly [U].                  & Two
+    Cortex-M7 processors and duplicated MRAM/NAND implement cold redundancy.
+    Public information does not say whether each processor has a separate
+    interface controller or how buses are switched during failover.
+    \\ \hline
+
+    Aerospacelab OBC \cite{nasa_soa_2024}                              &
+    The standalone OBC's public NASA entry does not state payload interfaces or
+    rates. A later Aerospacelab presentation lists configurations with up to 40
+    digital interfaces---including Ethernet and SpaceWire---rates: [U].
+                                                                       & The centralized-avionics concept lists CAN, RS-422 and RS-485 among its
+    control interfaces. Rates: [U].
+                                                                       & Memory capacities: [U].
+                                                                       & The documented processor is a Zynq-7045 containing dual Cortex-A9 cores
+    and Kintex-7 FPGA fabric, supervised by a rad-hard MCU and hardware
+    watchdog. No public DMA, buffering, payload-request or notification
+    specification is available.
+    \\
+    \hline
+
+    Bradford Binary OBC \cite{nasa_soa_2023}                           &
+    Payload interfaces and rates: [U]. No current Binary product page or public
+    datasheet was located in Bradford's current catalogue.
+                                                                       & Control interfaces and rates: [U].
+                                                                       & Memory capacities: [U].
+                                                                       & The NASA 2023 table describes dual Cortex-R5 processors, software EDAC and
+    internal cold redundancy, with approximately 3~W peak and 1~W idle power.
+    The current Bradford portfolio promotes the Stellar system, suggesting
+    Binary is legacy.
+    \\ \hline
+
+    Bradford Stellar OBC and Payload Data-Handling System
+    \cite{bradford_stellar_ds, nasa_soa_2026}                          &
+    Bradford describes Stellar as a scalable flight and payload data computer,
+    but the public page does not publish interface types, port counts or rates.
+    Throughputs: [U].                                                  & Control interfaces and rates: [U].                                         & Volatile
+    and non-volatile capacities: [U].                                  & NASA identifies dual PolarFire SoCs,
+    software EDAC and internal cold redundancy. The product combines spacecraft
+    control and payload data handling, but omits the memory map, failover, DMA
+    paths and payload software interface.                                                                                                                      \\
+    \hline
   \end{longtable}
 \end{landscape}
 \clearpage
