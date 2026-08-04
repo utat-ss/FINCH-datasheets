@@ -8,6 +8,9 @@
 \let\cite\citep
 \usepackage{csvsimple-l3}
 \usepackage{pdflscape}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 \title{Electrical BUS Literature Review}
 \author{UTAT Space Systems}
@@ -674,7 +677,150 @@ considerations are of interest:
         other control-level events.
 \end{enumerate}
 
-A comprehensive survey of commercial OBC platforms and their payload integration parameters is provided in Appendix~\ref{sec:appendix_b} (Table~\ref{tab:appendix_b_commercial_obcs}).
+A comprehensive survey of commercial OBC platforms and their payload integration parameters is provided in Appendix~\ref{sec:appendix_b} (Table~\ref{tab:appendix_b_commercial_obcs}). Figures~\ref{fig:payload_data_throughput}, \ref{fig:control_throughput}, and \ref{fig:memory_capacity_distribution} summarize the data rates and memory capacities observed across commercial platforms.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Plot 1: Payload Data Interface Throughput},
+        xlabel={Data Throughput (bit/s)},
+        ylabel={Protocol / Interface},
+        symbolic y coords={SPI, RS-422, SpaceWire, Ethernet},
+        ytick={SPI, RS-422, SpaceWire, Ethernet},
+        xmin=1e6, xmax=3e10,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=5.5cm,
+        width=13.5cm,
+        enlarge y limits=0.3
+      ]
+      % SPI: 16 MHz, 40 MHz -> 16 Mbit/s, 40 Mbit/s (points/range)
+      \addplot[thick, mark=*, blue] coordinates {(16e6,SPI) (40e6,SPI)};
+      \draw[very thick, blue] (axis cs:16e6,SPI) -- (axis cs:40e6,SPI);
+
+      % RS-422: 2.2 - 3 Mbit/s
+      \addplot[thick, mark=*, RedViolet] coordinates {(2.2e6,RS-422) (3e6,RS-422)};
+      \draw[very thick, RedViolet] (axis cs:2.2e6,RS-422) -- (axis cs:3e6,RS-422);
+
+      % SpaceWire: 50 Mbit/s, 80-150 Mbit/s, 300 Mbit/s
+      \addplot[thick, mark=*, Emerald] coordinates {(50e6,SpaceWire) (80e6,SpaceWire) (150e6,SpaceWire) (300e6,SpaceWire)};
+      \draw[very thick, Emerald] (axis cs:80e6,SpaceWire) -- (axis cs:150e6,SpaceWire);
+
+      % Ethernet: 100 Mbit/s, 1 Gbit/s, 10 Gbit/s
+      \addplot[thick, mark=*, Bittersweet] coordinates {(100e6,Ethernet) (1e9,Ethernet) (10e9,Ethernet)};
+      \draw[very thick, Bittersweet] (axis cs:100e6,Ethernet) -- (axis cs:10e9,Ethernet);
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Observed payload data interface throughputs from commercial OBC survey (Appendix~\ref{sec:appendix_b}). Dots represent specific published figures; lines represent observed operational ranges.}
+  \label{fig:payload_data_throughput}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Plot 2: Control \& Event Interface Throughput},
+        xlabel={Interface Rate (bit/s)},
+        ylabel={Protocol / Interface},
+        symbolic y coords={RS485_KISS, I2C_CSP, CAN_CSP},
+        ytick={RS485_KISS, I2C_CSP, CAN_CSP},
+        yticklabels={RS-485/KISS, {$\text{I}^2\text{C}$ (CSP)}, CAN (CSP)},
+        xmin=1e4, xmax=5e6,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=4.8cm,
+        width=13.5cm,
+        enlarge y limits=0.35
+      ]
+      % RS-485/KISS: 38.4 kbaud - 115.2 kbaud
+      \addplot[thick, mark=*, RawSienna] coordinates {(38.4e3,RS485_KISS) (115.2e3,RS485_KISS)};
+      \draw[very thick, RawSienna] (axis cs:38.4e3,RS485_KISS) -- (axis cs:115.2e3,RS485_KISS);
+
+      % I2C (CSP): 400 kHz (400 kbit/s)
+      \addplot[thick, mark=*, TealBlue] coordinates {(400e3,I2C_CSP)};
+
+      % CAN (CSP): 1 Mbit/s
+      \addplot[thick, mark=*, NavyBlue] coordinates {(1e6,CAN_CSP)};
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Observed control throughput and event interface rates from commercial OBC survey (Appendix~\ref{sec:appendix_b}).}
+  \label{fig:control_throughput}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Memory Capacity Distribution},
+        xlabel={Capacity (Bytes)},
+        ylabel={Memory Category},
+        symbolic y coords={MassStorage, Flash, VolatileRAM},
+        ytick={MassStorage, Flash, VolatileRAM},
+        yticklabels={Mass Storage, Flash, Volatile RAM},
+        xmin=1e5, xmax=2e13,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=5.8cm,
+        width=13.5cm,
+        enlarge y limits=0.3
+      ]
+      % Volatile RAM (384 kB - 24 GB)
+      \addplot[thick, mark=*, RoyalBlue] coordinates {
+        (384e3,VolatileRAM)
+        (1e6,VolatileRAM)
+        (2e6,VolatileRAM)
+        (8e6,VolatileRAM)
+        (64e6,VolatileRAM)
+        (256e6,VolatileRAM)
+        (375e6,VolatileRAM)
+        (512e6,VolatileRAM)
+        (1e9,VolatileRAM)
+        (2e9,VolatileRAM)
+        (4e9,VolatileRAM)
+        (8e9,VolatileRAM)
+        (24e9,VolatileRAM)
+      };
+      \draw[very thick, RoyalBlue] (axis cs:384e3,VolatileRAM) -- (axis cs:24e9,VolatileRAM);
+
+      % Flash (32 kB - 4 GB)
+      \addplot[thick, mark=*, DarkOrchid] coordinates {
+        (32e3,Flash)
+        (500e3,Flash)
+        (2e6,Flash)
+        (3e6,Flash)
+        (3.1e6,Flash)
+        (4e6,Flash)
+        (6e6,Flash)
+        (8e6,Flash)
+        (16e6,Flash)
+        (64e6,Flash)
+        (128e6,Flash)
+        (256e6,Flash)
+        (512e6,Flash)
+        (2e9,Flash)
+        (4e9,Flash)
+      };
+      \draw[very thick, DarkOrchid] (axis cs:32e3,Flash) -- (axis cs:4e9,Flash);
+
+      % Mass Storage (256 MB - 8.1 TB)
+      \addplot[thick, mark=*, ForestGreen] coordinates {
+        (256e6,MassStorage)
+        (2e9,MassStorage)
+        (4e9,MassStorage)
+        (8e9,MassStorage)
+        (16e9,MassStorage)
+        (32e9,MassStorage)
+        (70e9,MassStorage)
+        (233e9,MassStorage)
+        (256e9,MassStorage)
+        (8.1e12,MassStorage)
+      };
+      \draw[very thick, ForestGreen] (axis cs:256e6,MassStorage) -- (axis cs:8.1e12,MassStorage);
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Observed memory capacity ranges and data points across surveyed commercial OBCs: Volatile RAM (384~kB--24~GB), Flash/Boot NVM (32~kB--4~GB), and Non-Volatile Mass Storage (256~MB--8.1~TB).}
+  \label{fig:memory_capacity_distribution}
+\end{figure}
 
 Below in Table~\ref{tab:physical_connectors} is a survey of the OBC integration done by KP Labs.
 
@@ -1232,8 +1378,8 @@ compoenetns and designs which will need to be researched further and used as
 part of trades once requirements are established. Further research and
 collaboration with other subsystems is also required to guide the internal
 design decisions for this subsystem.
-
 \clearpage
+\appendix
 \begin{landscape}
   \phantomsection
   \section{Appendix A: Academic OBCs}
@@ -1255,42 +1401,46 @@ design decisions for this subsystem.
     Athena OBC                                                                                                                                                                                                                                                                        &
     University of Alberta (Albertasat)                                                                                                                                                                                                                                                &
     TI TMS570LC4357 (ARM Cortex R5F)                                                                                                                                                                                                                                                  &
-                                                                                                                                                                                                                                                                                      &
-                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                       &
+                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Features ideal for satellite OBC application, including radiation \& space reliability (rad-hard, SEL immune 48 MeV at 125\textdegree{}C, LAT 30krad), high computational performance (lockstep dual-core compare, 300MHz CPU clock, 1.66DMIPS/MHz). &
     \cite{athena_obc_site, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                                                \\ \hline
     Orcasat OBC                                                                                                                                                                                                                                                                       &
     University of Victoria                                                                                                                                                                                                                                                            &
     TI TMS570LS0714 (Dual ARM Cortex-R4F)                                                                                                                                                                                                                                             &
-                                                                                                                                                                                                                                                                                      &
-                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                       &
+                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Operates in lockstep, ECC integrated flash \& RAM banks, radiation-tested up to 6 krad, 80MHz core clock.                                                                                                                                            &
     \cite{orcasat_obc_site, orcasat_obc_ds}                                                                                                                                                                                                                                                                                                                                                   \\ \hline
     LORIS OBC                                                                                                                                                                                                                                                                         &
     Dalhousie University                                                                                                                                                                                                                                                              &
     NXP i.MX6DL (Single-core ARM Cortex-A9)                                                                                                                                                                                                                                           &
     USB 2.0; SPI; I2C; PWM; UART; GPIO; ADC                                                                                                                                                                                                                                           &
-                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                       &
     Embedded memory type: Flash. Low profile, power efficient SoC SBC. 4GB eMMC flash storage, 256MB DDR3 RAM, 800MHz operational frequency, -40\textdegree{}C to 85\textdegree{}C temperature range.                                                                                 &
     \cite{loris_obc_pub, loris_obc_nxp}                                                                                                                                                                                                                                                                                                                                                       \\ \hline
     NEUDOSE OBC                                                                                                                                                                                                                                                                       &
     McMaster University                                                                                                                                                                                                                                                               &
     Primary: AVR32. Secondary: Xilinx Zynq-7000 SoC                                                                                                                                                                                                                                   &
-                                                                                                                                                                                                                                                                                      &
-                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                       &
+                                                                                                                                                                                                                                                                                       &
     Primary is COTS chosen for high TRL to reduce mission risk; secondary is designed for radiation tolerance using rad-hard and non-rad-hard components.                                                                                                                             &
     \cite{neudose_obc_pub}                                                                                                                                                                                                                                                                                                                                                                    \\ \hline
     RADSAT-SK OBC                                                                                                                                                                                                                                                                     &
     University of Saskatchewan                                                                                                                                                                                                                                                        &
     ARM926EJ-S                                                                                                                                                                                                                                                                        &
-                                                                                                                                                                                                                                                                                      &
-                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                       &
+                                                                                                                                                                                                                                                                                       &
     \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
   \end{longtable}
 \end{landscape}
 \clearpage
 \begin{landscape}
-  \section{Appendix B: Commercial OBC Payload Integration Survey} \label{sec:appendix_b}
+  \section{Appendix B: Commercial OBC Payload Integration Survey}
+  \makeatletter
+  \def\@currentlabel{B}
+  \makeatother
+  \label{sec:appendix_b}
 
   Table~\ref{tab:appendix_b_commercial_obcs} surveys commercial OBC and payload computing platforms with respect to data and control communication throughputs, volatile/non-volatile buffering, transfer mechanisms, and event notification interfaces. The performance and specification confidence level of figures listed in Table~\ref{tab:appendix_b_commercial_obcs} are categorized according to the notation in Table~\ref{tab:appendix_b_notation}.
 
@@ -1365,7 +1515,15 @@ design decisions for this subsystem.
     datasheet does not disclose the shipped DMA-channel mapping, descriptor
     format, queue ownership, cache-coherency policy, or whether the SpaceWire
     software path is zero-copy.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{SpaceWire: 80--150~Mbit/s [M]} & & & \\
+    & \textbf{RS-422: 2.2--3~Mbit/s [M]} & & & \\
+    & \textbf{Storage: 21--45~MB/s [M]}
+    &
+    & \textbf{Volatile: 512~MB--1~GB [S]} & \\
+    & & & \textbf{Flash: 256~MB [S]} & \\
+    & & & \textbf{Mass Storage: 70--233~GB [S]} & \\ \hline\hline
 
     AAC Clyde Space Sirius QuadCore \cite{aac_sirius_quadcore_ds}      &
     Four SpaceWire ports with a vendor figure of ``up to 300~Mbit'' through the
@@ -1384,7 +1542,12 @@ design decisions for this subsystem.
     or RTEMS. No public information identifies whether SpaceWire-to-SDRAM
     movement uses a dedicated DMA engine, CPU copies, router-local buffering, or
     a mixture of these.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{SpaceWire: Up to 300~Mbit/s [S]}
+    &
+    & \textbf{Volatile: 512~MB [S]} & \\
+    & & & \textbf{Flash: 256~Kbit--32~MB [S]} & \\ \hline\hline
 
     AAC Clyde Space Sirius TCM LEON3FT \cite{aac_sirius_tcm_ds,
     aac_sirius_tcm_kit_ds, ecss_rmap_std}                              &
@@ -1404,7 +1567,13 @@ design decisions for this subsystem.
     mechanism. The public material does not expose the actual RMAP address map,
     access-control rules, maximum transaction size, queue depth, or number of
     simultaneously outstanding transactions.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{SpaceWire: 50~Mbit/s [S]}
+    &
+    & \textbf{Volatile: 64~MB [S]} & \\
+    & & & \textbf{Flash: 16~kB--2~GB [S]} & \\
+    & & & \textbf{Mass Storage: 32~GB [S]} & \\ \hline\hline
 
     EnduroSat Onboard Computer \cite{endurosat_obc_ds, libcsp_basics}  &
     100BASE-TX Ethernet $\rightarrow$ 100~Mbit/s nominal [N]. CAN-FD, RS-422,
@@ -1423,7 +1592,12 @@ design decisions for this subsystem.
     while direct GPIO provides payload power-control and feedback events. No
     public DMA topology, queue API, payload file-service API, or
     interrupt-completion model is documented.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{Ethernet: 100~Mbit/s [N]}
+    & \textbf{CAN (CSP): 1~Mbit/s [S]}
+    & \textbf{Flash: 2~MB [S]} & \\
+    & & & \textbf{Mass Storage: 32~GB [S]} & \\ \hline\hline
 
     Spacemanic Deep Thought \cite{spacemanic_deep_thought_ds,
     microchip_sam_v71_ds, libcsp_basics}                               &
@@ -1445,7 +1619,14 @@ design decisions for this subsystem.
     DMA-assisted peripheral transfers are architecturally possible; however, the
     OBC datasheet does not say which supplied drivers use DMA or whether CAN
     frames are copied from message RAM by the CPU.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{SPI: 40~MHz [S]}
+    & \textbf{CAN (CSP): 1~Mbit/s [S]}
+    & \textbf{Volatile: Up to 384~kB [S]} & \\
+    & & \textbf{$\text{I}^2\text{C}$ (CSP): 400~kHz [S]}
+    & \textbf{Flash: 3~MB--128~MB [S]} & \\
+    & & \textbf{RS-485/KISS: 115.2~kbaud [S]} & & \\ \hline\hline
 
     Spacemanic Eddie \cite{spacemanic_eddie_ds, libcsp_basics}         &
     External payload SPI up to 16~MHz [S].
@@ -1462,7 +1643,13 @@ design decisions for this subsystem.
     identifies a DMA TRIG connector pin but does not define its transaction
     protocol, destination buffer, handshake, or relationship to the CAN
     controller.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{SPI: 16~MHz [S]}
+    & \textbf{CAN (CSP): 1~Mbit/s [S]}
+    & \textbf{Flash: 6~MB [S]} & \\
+    & & \textbf{$\text{I}^2\text{C}$ (CSP): 400~kHz [S]} & & \\
+    & & \textbf{RS-485/KISS: 38.4~kbaud [S]} & & \\ \hline\hline
 
     Xiphos Q8/Q8S \cite{xiphos_q8_ds}                                  &
     Gigabit Ethernet gives 1~Gbit/s nominal [N]. USB 3.1 Gen 1, USB 2.0, 64
@@ -1479,7 +1666,13 @@ design decisions for this subsystem.
     descriptor rings, payload buffer allocation, measured storage bandwidth,
     or whether the independent eMMC devices can be sustained concurrently at a
     stated rate.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{Ethernet: 1~Gbit/s [N]}
+    &
+    & \textbf{Volatile: 4~GB [S]} & \\
+    & & & \textbf{Flash: 512~MB [S]} & \\
+    & & & \textbf{Mass Storage: 256~GB [S]} & \\ \hline\hline
 
     Unibap iX10-101 \cite{unibap_ix10_101_ds}                          &
     Two 10GBASE-T ports $\rightarrow$ 10~Gbit/s per port nominal [N]. The unit
@@ -1497,7 +1690,12 @@ design decisions for this subsystem.
     spacecraft bus, OBC, or communications system. This is strongly suggestive
     of a DMA-oriented streaming architecture, but the public document does not
     identify the DMA engines, descriptor format, backpressure mechanism, or
-    payload software API.                                                                                                                                      \\ \hline
+    payload software API.                                                                                                                                      \\
+    \cline{2-5}
+    & \textbf{Ethernet: 10~Gbit/s [N]}
+    &
+    & \textbf{Volatile: 24~GB [S]} & \\
+    & & & \textbf{Mass Storage: 128~GB--8.1~TB [S]} & \\ \hline\hline
 
     KP Labs Antelope \cite{kplabs_antelope_ds}                         &
     1 Gb Ethernet $\rightarrow$ 1~Gbit/s nominal [N]. LVDS or GTH transceivers,
@@ -1511,7 +1709,12 @@ design decisions for this subsystem.
     models---device drivers, memory-mapped FPGA registers, DMA streams, or
     shared-memory queues---but the vendor does not publicly specify which are
     supplied as standard payload services.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{Ethernet: 1~Gbit/s [N]}
+    &
+    & \textbf{Volatile: 8~GB [S]} & \\
+    & & & \textbf{Flash: 4~GB [S]} & \\ \hline\hline
 
     CesiumAstro SBC-1461 \cite{cesiumastro_sbc_1461_ds}                &
     Two 10GBASE-KR ports $\rightarrow$ 10~Gbit/s each nominal [N], two
@@ -1526,7 +1729,13 @@ design decisions for this subsystem.
     Linux SDK. However, the available detailed public sheet is dated 2022 and
     does not expose the payload API, DMA engines, queue organization, measured
     end-to-end throughput, or payload-reserved memory.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{Ethernet: 10~Gbit/s / 100~Mbit/s [N]}
+    &
+    & \textbf{Volatile: 2--4~GB [S]} & \\
+    & & & \textbf{Flash: 64~MB [S]} & \\
+    & & & \textbf{Mass Storage: 8~GB [S]} & \\ \hline\hline
 
     AAC Clyde Space Kryten-M3 \cite{aac_kryten_m3_ds}                  &
     Twenty LVDS lines, three QSPI interfaces---two using LVDS signalling and one
@@ -1545,7 +1754,10 @@ design decisions for this subsystem.
     Public material does not disclose DMA request mappings, FIFO depths,
     interrupt semantics, or whether LVDS/QSPI transfers can be performed
     zero-copy.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & \textbf{Flash: 16~MB [S]} & \\
+    & & & \textbf{Mass Storage: 4~GB [S]} & \\ \hline\hline
 
     Pumpkin PPM family \cite{pumpkin_ppm_a3_ds}                        &
     No uniform family-wide data interface exists. Individual PPMs expose the
@@ -1565,7 +1777,9 @@ design decisions for this subsystem.
     drivers, polling, interrupts or any DMA supported by the selected MCU. There
     is no family-wide published DMA, message-buffer or shared-memory
     architecture.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & \textbf{Flash: Up to 8~MB [S]} & \\ \hline\hline
 
     C3S Electronics OBC \cite{c3s_obc_ds, c3s_3u_platform_ds}          &
     Four M-LVDS channels arranged as two cold-redundant pairs. C3S platform
@@ -1580,7 +1794,11 @@ design decisions for this subsystem.
     The interfaces and memories are cold-redundant at platform level. Public
     documentation does not state the M-LVDS framing protocol, flow control, DMA
     path, FIFO capacity, payload file API, or failover timing.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & \textbf{Volatile: 384~kB [S]} & \\
+    & & & \textbf{Flash: 2--16~MB [S]} & \\
+    & & & \textbf{Mass Storage: 16~GB [S]} & \\ \hline\hline
 
     SkyLabs NANOobc-2 \cite{skylabs_nanoobc_2_ds}                      &
     Two ``high-speed'' LVDS interfaces, alternatively configurable as
@@ -1598,7 +1816,13 @@ design decisions for this subsystem.
     prioritized interrupts and fault traps. Public sources do not specify DMA;
     the documented model is primarily interrupt-, driver- and FDIR-managed
     communication.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & \textbf{LVDS: 20~Mbit/s [S]}
+    &
+    & \textbf{Volatile: 1--2~MB [S]} & \\
+    & & & \textbf{Flash: 500~kB--4~MB [S]} & \\
+    & & & \textbf{Mass Storage: 256~MB--2~GB [S]} & \\ \hline\hline
 
     SPiN MA61C \cite{spin_ma61c_ds, spin_esa_pres}                     &
     CubeSat and SmallSat configurations provide two SpaceWire interfaces.
@@ -1614,7 +1838,12 @@ design decisions for this subsystem.
     equipment, self-configures, installs/selects drivers, buffers data, and
     routes or converts traffic between interfaces. Its software uses data-link,
     network and transport abstraction layers.
-    \\ \hline
+    \\
+    \cline{2-5}
+    &
+    & \textbf{Response Latency: <1~ms [L]}
+    & \textbf{Volatile: 8--375~MB [S]} & \\
+    & & & \textbf{Flash: 8~MB [S]} & \\ \hline\hline
 
     Argotec FERMI OBC\&DH \cite{argotec_fermi_ds}                      &
     SpaceWire and LVDS are publicly listed as payload-capable high-speed
@@ -1626,7 +1855,11 @@ design decisions for this subsystem.
     FPGA combine software processing with FPGA acceleration. Public sources do
     not identify DMA channels, SpaceWire receive-buffer depths, descriptor
     formats, interrupt routing or payload-access APIs.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & \textbf{Volatile: 256~MB [S]} & \\
+    & & & \textbf{Flash: 3.1~MB [S]} & \\
+    & & & \textbf{Mass Storage: 16~GB [S]} & \\ \hline\hline
 
     SatRev OBC \cite{satrev_space_site, nasa_soa_2023}                 &
     Interfaces and rates: [U]. SatRev's public website currently emphasizes
@@ -1636,17 +1869,20 @@ design decisions for this subsystem.
                                                                        & NASA's survey identifies a quad-core Cortex-A72 processor at 1.5~GHz and
     gives board-level power figures, but does not provide a payload ICD,
     interface list, buffer architecture or transfer mechanism.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & & \\ \hline\hline
 
     Resilient Computing RadPC-SBC-001 \cite{nasa_soa_2026}             &
-    Payload interfaces and rates: [U].
-                                                                       & Control interfaces and rates: [U].
+    Payload interfaces and rates: [U].                                 & Control interfaces and rates: [U].
                                                                        & Volatile and non-volatile memory: [U].
                                                                        & NASA describes a 32-bit RISC-V processor implemented in an AMD Artix-7
     FPGA with COTS single-event-effect mitigation. No public payload-interface
     map, DMA implementation, shared-memory model or event-notification mechanism
     was located.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & & \\ \hline\hline
 
     Andes OBC \cite[p.~236]{nasa_soa_2024}\cite[p.~250]{nasa_soa_2026} &
     Public commercial listings mention $\text{I}^2\text{C}$, SPI and UART, but
@@ -1658,7 +1894,9 @@ design decisions for this subsystem.
     Cortex-M7 processors and duplicated MRAM/NAND implement cold redundancy.
     Public information does not say whether each processor has a separate
     interface controller or how buses are switched during failover.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & & \\ \hline\hline
 
     Aerospacelab OBC \cite{nasa_soa_2024}                              &
     The standalone OBC's public NASA entry does not state payload interfaces or
@@ -1672,7 +1910,8 @@ design decisions for this subsystem.
     watchdog. No public DMA, buffering, payload-request or notification
     specification is available.
     \\
-    \hline
+    \cline{2-5}
+    & & & & \\ \hline\hline
 
     Bradford Binary OBC \cite{nasa_soa_2023}                           &
     Payload interfaces and rates: [U]. No current Binary product page or public
@@ -1683,7 +1922,9 @@ design decisions for this subsystem.
     internal cold redundancy, with approximately 3~W peak and 1~W idle power.
     The current Bradford portfolio promotes the Stellar system, suggesting
     Binary is legacy.
-    \\ \hline
+    \\
+    \cline{2-5}
+    & & & & \\ \hline\hline
 
     Bradford Stellar OBC and Payload Data-Handling System
     \cite{bradford_stellar_ds, nasa_soa_2026}                          &
@@ -1694,12 +1935,14 @@ design decisions for this subsystem.
     software EDAC and internal cold redundancy. The product combines spacecraft
     control and payload data handling, but omits the memory map, failover, DMA
     paths and payload software interface.                                                                                                                      \\
-    \hline
+    \cline{2-5}
+    & & & & \\ \hline\hline
   \end{longtable}
 \end{landscape}
 \clearpage
 
 \bibliographystyle{ieeetr}
 \bibliography{references}
+
 
 \end{document}
