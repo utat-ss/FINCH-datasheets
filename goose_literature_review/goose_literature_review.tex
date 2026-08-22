@@ -4,11 +4,13 @@
 \usepackage[english]{babel}
 \usepackage[english]{isodate}
 \usepackage{graphicx}
+\usepackage{luacode}
 \input{../preamble}
 \let\cite\citep
 \usepackage{csvsimple-l3}
 \usepackage{pdflscape}
 \usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
@@ -508,6 +510,13 @@ applied selectively to critical links, buses, or nodes within any of the
 architectures above. It can improve availability, but adds transceivers,
 wiring, connector pins, power consumption, software logic, and verification
 effort \cite{nasa_soa_2026,ecss_canbus}.
+
+\begin{figure}[htbp]
+  \centering
+  \directlua{pc104 = dofile('pc104.lua'); pc104.gen_figure1()}
+  \caption{Overlay of various standards and OBC pinouts using PC/104 headers}
+  \label{fig:pc104_header_schematic}
+\end{figure}
 
 
 For the mission, the interconnect as well as the protocol bouquet selection will
@@ -1994,8 +2003,23 @@ design decisions for this subsystem.
   \end{longtable}
 \end{landscape}
 \clearpage
+\begin{landscape}
+  \section{Appendix C: PC/104 Pinout Survey}
+  \makeatletter
+  \def\@currentlabel{C}
+  \makeatother
+  \label{sec:appendix_c}
+
+  Table~\ref{tab:appendix_c_pc104_pinouts} surveys PC/104 header pinout assignments across ISO standards, open specifications, and commercial OBCs/peripherals.
+
+  \vspace{1em}
+  \renewcommand{\arraystretch}{1.2}
+  \directlua{pc104 = dofile('pc104.lua'); pc104.gen_table14()}
+\end{landscape}
+\clearpage
 
 \bibliographystyle{ieeetr}
+
 \bibliography{references}
 
 
