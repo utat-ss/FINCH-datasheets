@@ -52,6 +52,16 @@ In terms of sources, two major categories are surveyed:
         designs listed in Appendix~\ref{sec:appendix_a})
 \end{itemize}
 
+For practical interface-throughput characterization, the survey scope is expanded
+beyond CubeSat-specific implementations where directly comparable measured data
+are unavailable. Commercial spacecraft hardware, space-industry implementations,
+semiconductor-vendor benchmarks, and other technically documented tests are
+considered when they provide both a configured or nominal interface rate and an
+achieved useful data rate. CubeSat and spacecraft-specific measurements are
+preferred where available. These broader references are used to characterize
+throughput efficiency only and do not imply that the referenced hardware is
+directly suitable for the GOOSE design.
+
 \section{Document Revisions}
 
 \begin{center}
@@ -65,7 +75,7 @@ In terms of sources, two major categories are surveyed:
     0.4              & July 2026     & Sayali          & Memory and periptherals                                  \\ \hline
     0.5              & July 2026     & Matthew         & PAY connectors                                           \\ \hline
     0.6              & July 2026     & Asad            & SRS-4 integration                                        \\ \hline
-    0.7              & August 2026   & Jennifer        & Added buffering and higher-level protocols               \\ \hline
+    0.7              & August 2026   & Jennifer        & PAY integration, protocols, and throughput               \\ \hline
   \end{tabularx}
 \end{center}
 
@@ -710,6 +720,189 @@ considerations are of interest:
         other control-level events.
 \end{enumerate}
 
+\subsection*{Practical Interface Throughput}
+
+The representative rates in Table~\ref{tab:protocol_design_space} describe
+nominal, configured, or typical interface capabilities. The useful data rate
+available to PAY at the application level can be lower because transmitted
+traffic also contains framing, addressing, error-detection information,
+acknowledgements, inter-frame gaps, and higher-level protocol overhead.
+Processing, buffering, DMA availability, bus contention, and software
+implementation may introduce additional limitations.
+
+For comparison, an interface-throughput ratio is defined as
+\begin{equation}
+  \eta_{\mathrm{throughput}}
+  =
+  \frac{R_{\mathrm{useful}}}{R_{\mathrm{nominal}}},
+\end{equation}
+where $R_{\mathrm{useful}}$ is the demonstrated useful or application-level data
+rate and $R_{\mathrm{nominal}}$ is the corresponding configured, signalling, or
+Layer-1 rate. This ratio is implementation-dependent and should not be treated
+as a universal protocol constant. Table~\ref{tab:practical_interface_throughput}
+therefore records the operating conditions associated with each reference value.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{2.6cm}|
+  >{\raggedright\arraybackslash}p{2.3cm}|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{1.7cm}|
+  >{\raggedright\arraybackslash}p{5.6cm}|}
+  \caption{Reference practical throughput relative to nominal or configured interface rate}
+  \label{tab:practical_interface_throughput} \\ \hline
+  \textbf{Interface / Implementation} &
+  \textbf{Nominal / Configured Rate} &
+  \textbf{Demonstrated Useful Rate} &
+  \textbf{Ratio} &
+  \textbf{Condition and Source} \\ \hline
+  \endfirsthead
+
+  \caption[]{Reference practical throughput relative to nominal or configured interface rate (Continued)} \\ \hline
+  \textbf{Interface / Implementation} &
+  \textbf{Nominal / Configured Rate} &
+  \textbf{Demonstrated Useful Rate} &
+  \textbf{Ratio} &
+  \textbf{Condition and Source} \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  CAN (SRS-4, CSP) &
+  1.00~Mbit/s &
+  0.45~Mbit/s &
+  45.0\% &
+  Satlab application-layer goodput using CSP over CAN. The same value is
+  reported for 217-byte and 1024-byte application frames
+  \cite{satlab_srs4}. \\ \hline
+
+  Classical CAN &
+  500~kbit/s &
+  $\approx$281~kbit/s &
+  $\approx$56.2\% &
+  OTH Regensburg/CiA measured implementation using an 8-byte user payload and
+  227.6~$\mu$s end-to-end message-processing time
+  \cite{cia_canfd_comparison}. \\ \hline
+
+  CAN FD &
+  1~Mbit/s arbitration;
+  4~Mbit/s data phase &
+  $\approx$2.46~Mbit/s &
+  $\approx$61.5\%$^{\ast}$ &
+  OTH Regensburg/CiA measurement using a 64-byte user payload and
+  208.3~$\mu$s end-to-end message-processing time
+  \cite{cia_canfd_comparison}. \\ \hline
+
+  RS-422 (SRS-4, CSP) &
+  12.5~Mbit/s &
+  9.47--9.74~Mbit/s &
+  75.8--77.9\% &
+  Satlab application-layer goodput. The lower value uses 217-byte frames and
+  the upper value uses 1024-byte frames \cite{satlab_srs4}. \\ \hline
+
+  RS-485 &
+  Implementation-dependent &
+  --- &
+  --- &
+  No directly comparable application-goodput percentage was identified in the
+  reviewed sources. RS-485 specifies the electrical layer, so useful throughput
+  depends on the serial framing, packet protocol, bus loading, and half-duplex
+  turnaround used by the implementation \cite{adi_an960}. \\ \hline
+
+  UART &
+  128~kbaud &
+  86.2~kbaud &
+  $\approx$67.3\% &
+  TI TMS320TCI6616 internal-loopback measurement with one start bit, eight data
+  bits, one parity bit, and one stop bit; L2 memory was used as the source and
+  destination \cite{ti_keystone_throughput}. \\ \hline
+
+  I\textsuperscript{2}C &
+  400~kHz SCL &
+  351.7--354.5~kbit/s &
+  87.9--88.6\% &
+  TI TMS320TCI6616 internal-loopback benchmark using EDMA and 256--1024-byte
+  read/write transfers \cite{ti_keystone_throughput}. \\ \hline
+
+  SPI &
+  66~Mbit/s &
+  57~Mbit/s &
+  $\approx$86.4\% &
+  TI TMS320TCI6616 SPI benchmark using DMA-assisted transfers; the documented
+  implementation includes idle cycles between words
+  \cite{ti_keystone_throughput}. \\ \hline
+
+  USB 2.0 High-Speed Bulk &
+  480~Mbit/s &
+  43.8~MB/s
+  (350.4~Mbit/s) &
+  $\approx$73.0\% &
+  Cypress/Infineon FX2LP measured bulk-transfer test on an Intel ICH9 USB 2.0
+  host running Windows~7, with data generated internally by the FX2LP
+  \cite{infineon_an4053}. \\ \hline
+
+  Ethernet (SRS-4, UDP/IP) &
+  100~Mbit/s &
+  53.04--84.30~Mbit/s &
+  53.0--84.3\% &
+  Satlab application-layer goodput for 217-byte and 1024-byte frames,
+  respectively. Satlab identifies these values as CPU-limited rather than
+  protocol-overhead-limited \cite{satlab_srs4}. \\ \hline
+
+  SpaceWire &
+  200~Mbit/s signalling &
+  152--160~Mbit/s &
+  76--80\% &
+  STAR-Dundee reference for current radiation-tolerant SpaceWire technology:
+  approximately 160~Mbit/s unidirectional or 152~Mbit/s bidirectional per link
+  \cite{stardundee_spacewire}. \\ \hline
+
+  SpaceFibre &
+  6.25~Gbit/s/lane &
+  $\approx$4.6--4.8~Gbit/s &
+  $\approx$73.6--76.8\% &
+  STAR-Dundee STAR-Ultra single-lane router reference: approximately
+  4.8~Gbit/s unidirectional or 4.6~Gbit/s bidirectional per port
+  \cite{stardundee_spacefibre_2024}. \\ \hline
+
+\end{longtable}
+
+\noindent
+\textit{$^{\ast}$The CAN FD ratio is shown relative to the 4~Mbit/s data-phase
+rate. The arbitration phase operates at a separate 1~Mbit/s rate, so this ratio
+is not directly equivalent to the single-rate interface ratios.}
+
+The surveyed results do not support applying one universal utilization factor to
+all interfaces. In the referenced implementations, useful throughput ranges from
+approximately 45\% of the configured rate for CSP over CAN on the SRS-4 to
+approximately 80--90\% for several sustained point-to-point or long-transfer
+interfaces. Differences arise from framing, payload size, arbitration or bus
+sharing, processing architecture, DMA support, and software overhead. These
+ratios should therefore be treated as reference points for preliminary GOOSE
+sizing rather than guaranteed performance. The selected GOOSE implementation
+should be benchmarked directly when PAY throughput becomes a driving
+requirement.
+
+\subsection*{Throughput Margin}
+
+Demonstrated goodput and engineering margin are treated separately. Goodput
+accounts for protocol and implementation losses, while engineering margin
+reserves unused capacity for requirement growth, contention, timing variation,
+and other uncertainties. NASA software-engineering guidance provides historical
+Marshall Space Flight Center examples of data-bus-throughput margins of 35\% at
+CDR, 25\% at TRR, and 20\% at launch, while cautioning that the appropriate
+margin depends on how the resource is defined and on project context
+\cite{nasa_resource_margins}. These values are reference guidance and are not
+adopted as GOOSE requirements at this stage.
+
+A preliminary allocated rate may therefore be represented as
+\begin{equation}
+  R_{\mathrm{allocated}}
+  =
+  R_{\mathrm{useful}}(1-M),
+\end{equation}
+where $M$ is the selected project throughput margin.
+
 \subsection*{Payload Buffering Considerations}
 
 At the system level, PAY data may be held temporarily in volatile memory before
@@ -764,7 +957,7 @@ A comprehensive survey of commercial OBC platforms and their payload integration
       \draw[very thick, Bittersweet] (axis cs:100e6,Ethernet) -- (axis cs:10e9,Ethernet);
     \end{semilogxaxis}
   \end{tikzpicture}
-  \caption{Observed payload data interface throughputs from commercial OBC survey (Appendix~\ref{sec:appendix_b}). Dots represent specific published figures; lines represent observed operational ranges.}
+  \caption{Published payload data interface rates from the commercial OBC survey (Appendix~\ref{sec:appendix_b}). Values may be measured, manufacturer-stated, or nominal depending on the source; dots represent specific published figures and lines represent observed ranges. Practical application-level throughput is considered separately in Table~\ref{tab:practical_interface_throughput}.}
   \label{fig:payload_data_throughput}
 \end{figure}
 
@@ -796,7 +989,7 @@ A comprehensive survey of commercial OBC platforms and their payload integration
       \addplot[thick, mark=*, NavyBlue] coordinates {(1e6,CAN_CSP)};
     \end{semilogxaxis}
   \end{tikzpicture}
-  \caption{Observed control throughput and event interface rates from commercial OBC survey (Appendix~\ref{sec:appendix_b}).}
+  \caption{Published control and event interface rates from the commercial OBC survey (Appendix~\ref{sec:appendix_b}). These values are configured or published interface rates and should not be interpreted directly as application goodput; see Table~\ref{tab:practical_interface_throughput}.}
   \label{fig:control_throughput}
 \end{figure}
 
@@ -952,6 +1145,23 @@ Command \& Data Handling (C\&DH) firmware architectures:
                 link ($2200$--$2290$~MHz downlink, $2025$--$2110$~MHz uplink).
         \end{itemize}
 \end{itemize}
+
+\subsection{Interface Throughput}
+
+The SRS-4 datasheet provides a direct product-specific comparison between
+physical interface rate and application-layer goodput. CSP over CAN provides
+approximately 0.45~Mbit/s of application goodput from a 1~Mbit/s Layer-1 rate,
+or approximately 45\%. CSP over RS-422 provides 9.47~Mbit/s with 217-byte
+frames and 9.74~Mbit/s with 1024-byte frames from a 12.5~Mbit/s Layer-1 rate,
+corresponding to approximately 75.8--77.9\% \cite{satlab_srs4}.
+
+The same datasheet reports 53.04~Mbit/s and 84.30~Mbit/s of UDP/IP
+application goodput over a 100~Mbit/s Ethernet interface for 217-byte and
+1024-byte frames, respectively, and identifies those Ethernet results as
+CPU-limited rather than protocol-overhead-limited \cite{satlab_srs4}. These
+figures illustrate why the nominal interface rate alone is not sufficient for
+GOOSE data-path sizing; frame size, higher-level protocol, and processing
+architecture can materially change the rate available to the application.
 
 \subsection{Subsystem Team Responsibilities}
 Integrating the SRS-4 into a satellite design spans multiple engineering
