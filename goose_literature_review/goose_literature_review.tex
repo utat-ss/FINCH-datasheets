@@ -760,127 +760,126 @@ therefore records the operating conditions associated with each reference value.
   >{\raggedright\arraybackslash}p{1.7cm}|
   >{\raggedright\arraybackslash}p{5.6cm}|}
   \caption{Reference practical throughput relative to nominal or configured interface rate}
-  \label{tab:practical_interface_throughput} \\ \hline
+  \label{tab:practical_interface_throughput}                                                              \\ \hline
   \textbf{Interface / Implementation} &
-  \textbf{Nominal / Configured Rate} &
-  \textbf{Demonstrated Useful Rate} &
-  \textbf{Ratio} &
-  \textbf{Condition and Source} \\ \hline
+  \textbf{Nominal / Configured Rate}  &
+  \textbf{Demonstrated Useful Rate}   &
+  \textbf{Ratio}                      &
+  \textbf{Condition and Source}                                                                           \\ \hline
   \endfirsthead
 
   \caption[]{Reference practical throughput relative to nominal or configured interface rate (Continued)} \\ \hline
   \textbf{Interface / Implementation} &
-  \textbf{Nominal / Configured Rate} &
-  \textbf{Demonstrated Useful Rate} &
-  \textbf{Ratio} &
-  \textbf{Condition and Source} \\ \hline
+  \textbf{Nominal / Configured Rate}  &
+  \textbf{Demonstrated Useful Rate}   &
+  \textbf{Ratio}                      &
+  \textbf{Condition and Source}                                                                           \\ \hline
   \endhead
   \hline
   \endfoot
 
-  CAN (SRS-4, CSP) &
-  1.00~Mbit/s &
-  0.45~Mbit/s &
-  45.0\% &
+  CAN (SRS-4, CSP)                    &
+  1.00~Mbit/s                         &
+  0.45~Mbit/s                         &
+  45.0\%                              &
   Satlab application-layer goodput using CSP over CAN. The same value is
   reported for 217-byte and 1024-byte application frames
-  \cite{satlab_srs4}. \\ \hline
+  \cite{satlab_srs4}.                                                                                     \\ \hline
 
-  Classical CAN &
-  500~kbit/s &
-  $\approx$281~kbit/s &
-  $\approx$56.2\% &
+  Classical CAN                       &
+  500~kbit/s                          &
+  $\approx$281~kbit/s                 &
+  $\approx$56.2\%                     &
   OTH Regensburg/CiA measured implementation using an 8-byte user payload and
   227.6~$\mu$s end-to-end message-processing time
-  \cite{cia_canfd_comparison}. \\ \hline
+  \cite{cia_canfd_comparison}.                                                                            \\ \hline
 
-  CAN FD &
+  CAN FD                              &
   1~Mbit/s arbitration;
-  4~Mbit/s data phase &
-  $\approx$2.46~Mbit/s &
-  $\approx$61.5\%$^{\ast}$ &
+  4~Mbit/s data phase                 &
+  $\approx$2.46~Mbit/s                &
+  $\approx$61.5\%$^{\ast}$            &
   OTH Regensburg/CiA measurement using a 64-byte user payload and
   208.3~$\mu$s end-to-end message-processing time
-  \cite{cia_canfd_comparison}. \\ \hline
+  \cite{cia_canfd_comparison}.                                                                            \\ \hline
 
-  RS-422 (SRS-4, CSP) &
-  12.5~Mbit/s &
-  9.47--9.74~Mbit/s &
-  75.8--77.9\% &
+  RS-422 (SRS-4, CSP)                 &
+  12.5~Mbit/s                         &
+  9.47--9.74~Mbit/s                   &
+  75.8--77.9\%                        &
   Satlab application-layer goodput. The lower value uses 217-byte frames and
-  the upper value uses 1024-byte frames \cite{satlab_srs4}. \\ \hline
+  the upper value uses 1024-byte frames \cite{satlab_srs4}.                                               \\ \hline
 
-  RS-485 &
-  Implementation-dependent &
-  --- &
-  --- &
+  RS-485                              &
+  Implementation-dependent            &
+  ---                                 &
+  ---                                 &
   No directly comparable application-goodput percentage was identified in the
   reviewed sources. RS-485 specifies the electrical layer, so useful throughput
   depends on the serial framing, packet protocol, bus loading, and half-duplex
-  turnaround used by the implementation \cite{adi_an960}. \\ \hline
+  turnaround used by the implementation \cite{adi_an960}.                                                 \\ \hline
 
-  UART &
-  128~kbaud &
-  86.2~kbaud &
-  $\approx$67.3\% &
+  UART                                &
+  128~kbaud                           &
+  86.2~kbaud                          &
+  $\approx$67.3\%                     &
   TI TMS320TCI6616 internal-loopback measurement with one start bit, eight data
   bits, one parity bit, and one stop bit; L2 memory was used as the source and
-  destination \cite{ti_keystone_throughput}. \\ \hline
+  destination \cite{ti_keystone_throughput}.                                                              \\ \hline
 
-  I\textsuperscript{2}C &
-  400~kHz SCL &
-  351.7--354.5~kbit/s &
-  87.9--88.6\% &
+  I\textsuperscript{2}C               &
+  400~kHz SCL                         &
+  351.7--354.5~kbit/s                 &
+  87.9--88.6\%                        &
   TI TMS320TCI6616 internal-loopback benchmark using EDMA and 256--1024-byte
-  read/write transfers \cite{ti_keystone_throughput}. \\ \hline
+  read/write transfers \cite{ti_keystone_throughput}.                                                     \\ \hline
 
-  SPI &
-  66~Mbit/s &
-  57~Mbit/s &
-  $\approx$86.4\% &
+  SPI                                 &
+  66~Mbit/s                           &
+  57~Mbit/s                           &
+  $\approx$86.4\%                     &
   TI TMS320TCI6616 SPI benchmark using DMA-assisted transfers; the documented
   implementation includes idle cycles between words
-  \cite{ti_keystone_throughput}. \\ \hline
+  \cite{ti_keystone_throughput}.                                                                          \\ \hline
 
-  USB 2.0 High-Speed Bulk &
-  480~Mbit/s &
+  USB 2.0 High-Speed Bulk             &
+  480~Mbit/s                          &
   43.8~MB/s
-  (350.4~Mbit/s) &
-  $\approx$73.0\% &
+  (350.4~Mbit/s)                      &
+  $\approx$73.0\%                     &
   Cypress/Infineon FX2LP measured bulk-transfer test on an Intel ICH9 USB 2.0
   host running Windows~7, with data generated internally by the FX2LP
-  \cite{infineon_an4053}. \\ \hline
+  \cite{infineon_an4053}.                                                                                 \\ \hline
 
-  Ethernet (SRS-4, UDP/IP) &
-  100~Mbit/s &
-  53.04--84.30~Mbit/s &
-  53.0--84.3\% &
+  Ethernet (SRS-4, UDP/IP)            &
+  100~Mbit/s                          &
+  53.04--84.30~Mbit/s                 &
+  53.0--84.3\%                        &
   Satlab application-layer goodput for 217-byte and 1024-byte frames,
   respectively. Satlab identifies these values as CPU-limited rather than
-  protocol-overhead-limited \cite{satlab_srs4}. \\ \hline
+  protocol-overhead-limited \cite{satlab_srs4}.                                                           \\ \hline
 
-  SpaceWire &
-  200~Mbit/s signalling &
-  152--160~Mbit/s &
-  76--80\% &
+  SpaceWire                           &
+  200~Mbit/s signalling               &
+  152--160~Mbit/s                     &
+  76--80\%                            &
   STAR-Dundee reference for current radiation-tolerant SpaceWire technology:
   approximately 160~Mbit/s unidirectional or 152~Mbit/s bidirectional per link
-  \cite{stardundee_spacewire}. \\ \hline
+  \cite{stardundee_spacewire}.                                                                            \\ \hline
 
-  SpaceFibre &
-  6.25~Gbit/s/lane &
-  $\approx$4.6--4.8~Gbit/s &
-  $\approx$73.6--76.8\% &
+  SpaceFibre                          &
+  6.25~Gbit/s/lane                    &
+  $\approx$4.6--4.8~Gbit/s            &
+  $\approx$73.6--76.8\%               &
   STAR-Dundee STAR-Ultra single-lane router reference: approximately
   4.8~Gbit/s unidirectional or 4.6~Gbit/s bidirectional per port
-  \cite{stardundee_spacefibre_2024}. \\ \hline
-
+  \cite{stardundee_spacefibre_2024}.                                                                      \\ \hline
 \end{longtable}
 
 \noindent
 \textit{$^{\ast}$The CAN FD ratio is shown relative to the 4~Mbit/s data-phase
-rate. The arbitration phase operates at a separate 1~Mbit/s rate, so this ratio
-is not directly equivalent to the single-rate interface ratios.}
+  rate. The arbitration phase operates at a separate 1~Mbit/s rate, so this ratio
+  is not directly equivalent to the single-rate interface ratios.}
 
 The surveyed results do not support applying one universal utilization factor to
 all interfaces. In the referenced implementations, useful throughput ranges from
