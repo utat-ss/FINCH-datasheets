@@ -12,3 +12,6 @@
 *.bcf
 *.blg
 *.run.xml
+
+# Ignore large source PDF materials for literature review
+goose_literature_review/sources/

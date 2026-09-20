@@ -67,7 +67,7 @@
 % First page title layout is defined here
 \renewcommand{\maketitle}{%
   \twocolumn[%
-    {\Huge\sffamily\bfseries\@title} {\hfill{\@companylogo}}\\
+    {\Huge\bfseries\@title} {\hfill{\@companylogo}}\\
     \noindent\rule{\textwidth}{1pt}
     \medskip
   ]%

@@ -21,6 +21,9 @@
   ],
   "latex-workshop.latex.recipe.default": "lualatex",
   "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoBuild.onSave.files.ignore": [
+    "**/pay_sds/pay_sds.tex"
+  ],
   "latex-workshop.latex.outDir": "./",
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.formatting.latex": "latexindent",

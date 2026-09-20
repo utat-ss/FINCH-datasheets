@@ -1,0 +1,2340 @@
+\documentclass[10pt]{../datasheet}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[english]{isodate}
+\usepackage{graphicx}
+\usepackage{luacode}
+\input{../preamble}
+\let\cite\citep
+\usepackage{csvsimple-l3}
+\usepackage{pdflscape}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\title{Electrical BUS Literature Review}
+\author{UTAT Space Systems}
+\date{July 2026}
+\revision{Revision 1}
+\companylogo{\includegraphics[scale=0.022]{../figures/utat_ss.png}}
+
+\begin{document}
+\maketitle
+\section{Overview of the Electrical BUS Subsystem}
+
+The Electrical BUS subsystem's goal is to provide the CubeSat with a centralized
+point of control, which at a high level will involve observing indicators and
+driving actuators. More specifically, Electrical BUS will interact with the
+PAYload, RF, and EPS subsystems to manage the state of affairs on the CubeSat.
+Operations of the electrical subsystem may include directing the PAYload
+subsystem to send data to the RF subsystem for downlinking, and acquiring uplink
+data from RF to perform a reboot.
+
+
+\section{Literature Review Methodology}
+
+As it pertains to the design, the main components that make up the electrical
+subsystem essentially boil down to three categories: control unit (that is,
+device(s) responsible for carrying out generic operations of the electrical
+subsystem, for example an MCU), protocol (that is, an interface for connecting
+two or more devices and allowing them to share data in one way or another, for
+example I2C), and peripherals (that is, device(s) responsible for a particular
+function within the Electrical BUS subsystem, for example a watchdog). This
+classification is not a recognized one, but has been found to be useful when
+conducting this literature review since the overwhelming majority of the designs
+can be deconstructed into components each of which would fit into one of these
+categories [subjective].
+
+In terms of sources, two major categories are surveyed:
+\begin{itemize}
+  \item Commercial OBCs discussed in NASA's Small-Sat State of the Art reports from 2022 to 2026 (\cite[pp.~215--226]{nasa_soa_2022}, \cite[pp.~225--237]{nasa_soa_2023}, \cite[pp.~227--239]{nasa_soa_2024}, \cite[pp.~241--253]{nasa_soa_2026}), with trends also observed.
+  \item OBCs built by academic design teams around Canada and beyond (considered
+        designs listed in Appendix~\ref{sec:appendix_a})
+\end{itemize}
+
+For practical interface-throughput characterization, the survey scope is expanded
+beyond CubeSat-specific implementations where directly comparable measured data
+are unavailable. Commercial spacecraft hardware, space-industry implementations,
+semiconductor-vendor benchmarks, and other technically documented tests are
+considered when they provide both a configured or nominal interface rate and an
+achieved useful data rate. CubeSat and spacecraft-specific measurements are
+preferred where available. These broader references are used to characterize
+throughput efficiency only and do not imply that the referenced hardware is
+directly suitable for the GOOSE design.
+
+\section{Document Revisions}
+
+\begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\columnwidth}{|l|l|l|X|}
+    \hline
+    \textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Description}                                     \\ \hline
+    0.1              & July 2026     & Boris           & Initial                                                  \\ \hline
+    0.2              & July 2026     & Jennifer        & Expanded protocol, interconnect, and COTS trade studies. \\ \hline
+    0.3              & July 2026     & Boris           & Protection considerations                                \\ \hline
+    0.4              & July 2026     & Sayali          & Memory and periptherals                                  \\ \hline
+    0.5              & July 2026     & Matthew         & PAY connectors                                           \\ \hline
+    0.6              & July 2026     & Asad            & SRS-4 integration                                        \\ \hline
+    0.7              & August 2026   & Boris           & PC/104 pinout survey                                     \\ \hline
+    0.8              & August 2026   & Jennifer        & PAY integration, protocols, and throughput               \\ \hline
+  \end{tabularx}
+\end{center}
+
+\onecolumn
+
+\section{Design Space}
+
+This section outlines the resulting design space for the Electrical BUS
+Subsystem based on the corresponding literature review. We establish a space of
+common control units, protocols and periptherals for our internal design
+process.
+
+\section{Control Units}
+
+The control-unit design space ranges from low-power microcontrollers to
+heterogeneous processor--FPGA systems. NASA's State of the Art reports show
+that most conventional CubeSat OBCs use microcontrollers or embedded
+microprocessors because command execution, telemetry collection, timekeeping,
+fault management, and subsystem coordination do not require high computational
+performance \cite{nasa_soa_2022,nasa_soa_2023,nasa_soa_2024,nasa_soa_2026}.
+Higher-performance FPGAs, application processors, and system-on-chip devices
+are generally introduced when the OBC must also support image processing,
+autonomy, high-rate payload data, or machine-learning workloads.
+
+
+\begin{longtable}{|p{2.8cm}|p{4.6cm}|p{5.3cm}|p{3.8cm}|}
+  \caption{Candidate OBC control-unit architectures} \label{tab:control_architectures} \\ \hline
+  \textbf{Architecture}                                     &
+  \textbf{Characteristics}                                  &
+  \textbf{NASA SOA Examples}                                &
+  \textbf{Academic Examples}                                                           \\ \hline
+  \endfirsthead
+  \caption[]{Candidate OBC control-unit architectures (Continued)}                     \\ \hline
+  \textbf{Architecture}                                     &
+  \textbf{Characteristics}                                  &
+  \textbf{NASA SOA Examples}                                &
+  \textbf{Academic Examples}                                                           \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Single MCU or processor                                   &
+  One device performs command execution, telemetry, timekeeping, fault
+  management, and subsystem control. Lowest complexity and generally lowest
+  power.                                                    &
+  EnduroSat OBC, ARM Cortex-M7
+  \cite[p.~229]{nasa_soa_2023};
+  AAC Clyde Space Kryten-M3, Cortex-M3
+  \cite[p.~228]{nasa_soa_2023}.                             &
+  STM32L4 PC/104 OBC; Athena TMS570; ORCASat TMS570
+  \cite{stm32l4_vst104_pub,athena_obc_site,orcasat_obc_site}.                          \\ \hline
+
+  Multicore SoC                                             &
+  Multiple cores share one device and memory system. Provides additional
+  performance or lockstep capability, but does not remove the SoC as a
+  single point of failure.                                  &
+  Argotec FERMI, dual-core LEON3FT
+  \cite[p.~229]{nasa_soa_2023};
+  SPiN MA61C, dual-core GR712RC
+  \cite[p.~236]{nasa_soa_2024};
+  Xiphos Q7S, dual-core Cortex-A9
+  \cite[p.~238]{nasa_soa_2024}.                             &
+  Athena and ORCASat use lockstep-capable ARM safety microcontrollers
+  \cite{athena_obc_ti_prod,orcasat_obc_ds}.                                            \\ \hline
+
+  Dual redundant processors                                 &
+  Two processor devices provide cold, warm, or active redundancy. One processor
+  may take control following a fault in the primary device. &
+  Andes OBC, two Cortex-M7 processors with full cold redundancy
+  \cite[p.~230]{nasa_soa_2026};
+  Bradford Binary OBC, dual Cortex-R5 with internal cold redundancy
+  \cite[p.~229]{nasa_soa_2023};
+  Bradford Stellar OBC, dual PolarFire SoCs with internal cold redundancy
+  \cite[p.~230]{nasa_soa_2026}.                             &
+  No directly equivalent two-device redundant architecture was identified in
+  the academic survey.                                                                 \\ \hline
+
+  Controller plus FPGA or DPU                               &
+  A low-power controller performs critical spacecraft control while an FPGA or
+  higher-performance processor handles payload data or acceleration. The
+  secondary unit may be powered down when unused.           &
+  KP Labs Antelope, RM57 OBC plus Zynq UltraScale+ DPU
+  \cite[p.~230]{nasa_soa_2023};
+  NOVI Gen~2, Vorago MCU plus Versal AI Edge SoC
+  \cite[p.~232]{nasa_soa_2026}.                             &
+  NEUDOSE, primary AVR32 plus secondary Xilinx Zynq-7000
+  \cite{neudose_obc_pub}.                                                              \\ \hline
+
+  FPGA-centric                                              &
+  Control or processing is implemented using programmable logic and,
+  optionally, a soft processor. Suitable for deterministic parallel interfaces
+  and high-rate data paths, but more difficult to develop as a general-purpose
+  OBC.                                                      &
+  LASP Generic SmallSat FPGA Board, Kintex-7
+  \cite[p.~230]{nasa_soa_2023};
+  KP Labs Lion, Kintex UltraScale
+  \cite[p.~230]{nasa_soa_2023}.                             &
+  No FPGA-only primary OBC was identified in the academic survey.                      \\ \hline
+
+  Distributed controllers                                   &
+  Subsystem-local processors control the EPS, ADCS, communications, or payload
+  and exchange data with a coordinating OBC. This improves fault containment but
+  increases network and software complexity.                &
+  NASA identifies federated, distributed, heterogeneous, and mixed-criticality
+  avionics as viable SmallSat architectures
+  \cite[p.~225]{nasa_soa_2023}
+  \cite[p.~221--222]{nasa_soa_2026}.                        &
+  Individual subsystem controllers used alongside the primary academic OBC.            \\ \hline
+\end{longtable}
+
+All architectures will be considered during preliminary design; however, the
+current baseline is a centralized microcontroller-based OBC with independent
+watchdog and reset circuitry. This approach is the most common among the
+academic systems surveyed and provides the lowest-risk balance of power,
+determinism, software complexity, and flight heritage. An FPGA or secondary
+processor may be added later if payload-processing requirements cannot be met
+by the primary MCU.
+
+\section{Protocols and Interconnect}
+
+This section will summarize the survey or protocols across the NASA's SOAs as
+well as Canadian design teams' CubeSats in
+Table~\ref{tab:protocol_design_space}, as well as provide an overview of
+interconnect architectures in Table~\ref{tab:interconnect_architectures}.
+Communication interfaces differ not only in throughput, but also in topology,
+wiring complexity, fault containment, and implementation requirements.
+Consequently, protocol selection should consider the electrical implementation
+and system architecture in addition to nominal data rate.
+
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{5.0cm}|
+  >{\raggedright\arraybackslash}p{5.2cm}|}
+  \caption{Protocol and electrical-interface design space} \label{tab:protocol_design_space} \\ \hline
+  \textbf{Protocol}                                                    &
+  \textbf{Representative Rate}                                         &
+  \textbf{Survey Examples}                                             &
+  \textbf{Primary Considerations}                                                            \\ \hline
+  \endfirsthead
+  \caption[]{Protocol and electrical-interface design space (Continued)}                     \\ \hline
+  \textbf{Protocol}                                                    &
+  \textbf{Representative Rate}                                         &
+  \textbf{Survey Examples}                                             &
+  \textbf{Primary Considerations}                                                            \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  I\textsuperscript{2}C                                                &
+  100~kbit/s--3.4~Mbit/s                                               &
+  LORIS OBC \cite{loris_obc_pub}; identified as a common synchronous interface
+  in all four NASA surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  Low pin count and broad peripheral support; limited distance and bandwidth;
+  shared-bus faults may block all devices. Bus capacitance and pull-up sizing
+  constrain the usable rate as devices are added. If SDA remains stuck low, the
+  I\textsuperscript{2}C specification recommends nine SCL pulses, followed by
+  hardware reset or power cycling if the bus is not released
+  \cite{nxp_um10204}.                                                                        \\ \hline
+
+  SPI                                                                  &
+  Application-dependent; commonly 1--50+~Mbit/s                        &
+  LORIS OBC \cite{loris_obc_pub}; NASA interface surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  Deterministic and comparatively fast; requires separate chip-select signals
+  and provides no standardized addressing or error handling. Clock mode,
+  chip-select timing, and SCLK routing or fan-out must be verified for each
+  peripheral, particularly at higher rates \cite{adi_spi_errors}.                            \\ \hline
+
+  UART                                                                 &
+  Device-dependent; commonly kbit/s to several Mbit/s                  &
+  LORIS uses UART \cite{loris_obc_pub}; asynchronous serial interfaces
+  are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  Simple asynchronous point-to-point communication with low implementation
+  complexity. UART provides serial framing and basic receive-error detection,
+  while subsystem addressing, arbitration, acknowledgements, and recovery
+  policies generally require application-level or higher-level software
+  \cite{microchip_uart}.                                                                     \\ \hline
+
+  RS-422                                                               &
+  Approximately 90~kbit/s at 1,200~m to
+  10~Mbit/s at 4.5~m                                                   &
+  Differential serial interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  Differential simplex multidrop communication with one driver and up to
+  ten receivers. It provides greater noise immunity and usable cable length
+  than logic-level UART, but requires appropriate cabling and termination
+  \cite{adi_an960}.                                                                          \\ \hline
+
+  RS-485                                                               &
+  Approximately 100~kbit/s at 1,200~m to 10~Mbit/s at 12~m             &
+  Differential serial interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  Differential multipoint communication allowing multiple
+  transceivers to share a bus. Termination is required for reliable
+  higher-rate or longer links, and half-duplex implementations require
+  driver-direction control \cite{adi_an960,adi_cn0416}.                                      \\ \hline
+
+  CAN / CAN FD                                                         &
+  1~Mbit/s Classical CAN; commonly up to 8~Mbit/s CAN-FD data phase    &
+  STM32L4 PC/104 OBC \cite{stm32l4_vst104_pub}; CAN is listed as a common
+  spacecraft fieldbus
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~224--225]{nasa_soa_2026}.                                  &
+  Differential multidrop operation, arbitration, acknowledgements, and error
+  confinement make it suitable for EPS, ADCS, RF, and housekeeping traffic.
+  Payload throughput is limited. The bus should be terminated at its two
+  physical ends, with node stubs kept short to reduce reflections
+  \cite{ti_can_phy,ecss_canbus}.                                                             \\ \hline
+
+  USB 2.0                                                              &
+  12~Mbit/s full-speed; 480~Mbit/s high-speed                          &
+  LORIS OBC \cite{loris_obc_pub}.                                      &
+  High COTS compatibility and throughput, but host/device roles, enumeration,
+  connector retention, software complexity, VBUS sensing, and the board's USB
+  power arrangement must be defined \cite{usb20_spec,st_an4879}.                             \\ \hline
+
+  Ethernet                                                             &
+  100~Mbit/s--1~Gbit/s commonly                                        &
+  Listed as a network interface in each NASA survey
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.                                        &
+  High throughput and broad software support; requires switching or routing and
+  may require additional measures for deterministic real-time operation.
+  \\ \hline
+
+  SpaceWire / SpaceFibre                                               &
+  SpaceWire: 2--400~Mbit/s;
+  SpaceFibre: up to 5~Gbit/s per lane and over 20~Gbit/s using
+  multiple lanes \cite{ecss_spacewire,ecss_spacefibre}                 &
+  SpaceWire is listed in the 2022--2024 surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024};
+  SpaceWire and SpaceFibre are included together in 2026
+  \cite[p.~225]{nasa_soa_2026}.                                        &
+  Spacecraft-specific point-to-point networking with packet routing and
+  link-level fault management. SpaceFibre additionally supports virtual
+  channels, quality of service, and improved fault detection, isolation, and
+  recovery. Both require more specialized implementation and test resources
+  than conventional MCU buses \cite{ecss_spacewire,ecss_spacefibre}.                         \\ \hline
+
+  PPS (Pulse Per Second)                                               &
+  1 pulse/s                                                            &
+  GNSS receivers commonly provide a configurable timing-pulse output; the
+  ZED-F9P is one representative implementation \cite{ublox_zedf9p_im}. &
+  Provides a precise synchronization edge but does not independently encode the
+  absolute time. It is normally paired with UART or another data interface;
+  electrical level, jitter, routing, and holdover behaviour must be considered.
+  \\ \hline
+
+  SerDes / MGT                                                         &
+  Gigabit-per-second class; XAUI provides 10~Gbit/s aggregate          &
+  Identified by NASA as high-rate mission-data interfaces
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                        &
+  Suitable for FPGA, payload, mass-memory, and radio data paths. Requires
+  controlled-impedance routing, suitable connectors, reference clocks, and
+  signal-integrity analysis.                                                                 \\ \hline
+
+  GPIO / PWM /
+  ADC / DAC                                                            &
+  Application-dependent                                                &
+  LORIS provides GPIO, PWM, and ADC \cite{loris_obc_pub}; discrete and analog
+  interfaces are listed by NASA
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                        &
+  Appropriate for enables, inhibits, deployment signals, and analog telemetry;
+  creates dedicated wiring and provides little inherent fault detection.
+  \\ \hline
+
+  JTAG / ISP / ICSP                                                    &
+  Not a mission-data interface                                         &
+  Debug and programming interfaces are listed in the NASA surveys
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                        &
+  Required for programming and board-level debugging; access should be isolated
+  or protected during flight.                                                                \\ \hline
+\end{longtable}
+
+\subsection*{PC/104 review}
+
+
+TODO. Refer to Figure~\ref{fig:pc104_header_schematic}
+
+\begin{figure}[htbp]
+  \centering
+  \directlua{pc104 = dofile('pc104.lua'); pc104.gen_figure1()}
+  \caption{Overlay of various standards and OBC pinouts using PC/104 headers}
+  \label{fig:pc104_header_schematic}
+\end{figure}
+
+\subsection*{Higher-Level Communication Protocols}
+
+The interfaces listed in Table~\ref{tab:protocol_design_space} describe the
+electrical and link-level means by which data is carried between subsystems.
+Higher-level communication protocols can additionally define how messages are
+addressed, routed, organized, and delivered across those interfaces.
+
+CubeSat Space Protocol (CSP) is a lightweight packet-oriented protocol stack
+intended for distributed embedded systems. It provides subsystem node
+addressing, port-based services, packet routing, and datagram transport. CSP
+supports interfaces including CAN, I\textsuperscript{2}C, serial links using
+KISS over RS-232 or RS-422, and Ethernet
+\cite{libcsp_basics,libcsp_protocol_stack}. This allows a common communication
+structure to be used across multiple subsystem links. The project would still
+need to define its node addresses, routes, application services, and whether
+reliable delivery is required.
+
+Remote Memory Access Protocol (RMAP) is a standardized protocol that operates
+over SpaceWire. It supports reading from and writing to memory in a remote
+SpaceWire node and may also be used for network configuration, node control,
+and data transfer \cite{ecss_rmap_std}. RMAP is therefore relevant when
+SpaceWire is selected and remote-memory-style access is useful, rather than
+being a general replacement for communication over CAN, UART, or other
+interfaces.
+
+A project-specific packet format remains another possible approach and may
+reduce implementation complexity for a small network, but would provide less
+standardization and interoperability than an established protocol. Selection
+of a higher-level protocol should therefore consider subsystem compatibility,
+software complexity, reliability requirements, packet overhead, and the
+capabilities of the underlying interface.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{3.0cm}|
+  >{\raggedright\arraybackslash}p{4.5cm}|
+  >{\raggedright\arraybackslash}p{4.1cm}|
+  >{\raggedright\arraybackslash}p{4.0cm}|}
+  \caption{Candidate interconnect architectures} \label{tab:interconnect_architectures} \\ \hline
+  \textbf{Architecture}                                          &
+  \textbf{Connection Pattern}                                    &
+  \textbf{Advantages}                                            &
+  \textbf{Limitations}                                                                  \\ \hline
+  \endfirsthead
+  \caption[]{Candidate interconnect architectures (Continued)}                          \\ \hline
+  \textbf{Architecture}                                          &
+  \textbf{Connection Pattern}                                    &
+  \textbf{Advantages}                                            &
+  \textbf{Limitations}                                                                  \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Unified stack                                                  &
+  OBC, EPS, RF, ADCS, and payload share a PC/104-style stack-through connector
+  carrying power and common buses. The STM32L4 academic OBC uses this format
+  \cite{stm32l4_vst104_pub}. NASA discusses PC/104 and stackable mezzanines in
+  \cite[p.~210]{nasa_soa_2022},
+  \cite[pp.~226--227]{nasa_soa_2023},
+  \cite[pp.~229--230]{nasa_soa_2024}, and
+  \cite[p.~222]{nasa_soa_2026}.                                  &
+  Compact, modular, rugged, and requires little harnessing. The self-stacking
+  arrangement eliminates the need for a separate backplane or card cage
+  \cite{pc104_standard}.                                         &
+  Shared pinout constrains all boards; board order, connector bandwidth, and
+  available signal lanes may limit expansion. Shared power or bus paths can
+  also reduce fault isolation between boards.                                           \\ \hline
+
+  Backplane                                                      &
+  Subsystem cards plug into a shared CompactPCI or SpaceVPX backplane
+  \cite[p.~210]{nasa_soa_2022}
+  \cite[p.~226]{nasa_soa_2023}
+  \cite[p.~229]{nasa_soa_2024}
+  \cite[p.~222]{nasa_soa_2026}.                                  &
+  Rigid mechanical support, modular replacement, standardized slot and module
+  interfaces, and high-speed routing. SpaceVPX additionally targets
+  interoperable and fault-tolerant systems \cite{vita_spacevpx}. &
+  Higher mass, volume, connector cost, and chassis complexity, with additional
+  mechanical, electrical, and interoperability verification.                            \\ \hline
+
+  Centralized point-to-point                                     &
+  Each subsystem has a dedicated connection to the OBC; all commands and data
+  pass through the OBC. NASA identifies direct point-to-point and centralized
+  architectures in
+  \cite[p.~207]{nasa_soa_2022} and
+  \cite[p.~226]{nasa_soa_2024}.                                  &
+  Simple command authority, dedicated links, predictable data paths, and strong
+  link-level isolation.                                          &
+  Connector and harness count increase with the number of subsystems. The OBC
+  can become a bandwidth bottleneck and single point of failure, particularly
+  when high-rate payload traffic passes through it
+  \cite[pp.~221--223]{nasa_soa_2026}.                                                   \\ \hline
+
+  Shared peer network                                            &
+  OBC, EPS, RF, ADCS, and payload controllers communicate as peers over CAN,
+  Ethernet, or SpaceWire.                                        &
+  Reduces dedicated wiring, allows direct subsystem communication, and supports
+  distributed control. Subsystem-local processing may reduce dependence on the
+  primary OBC \cite[pp.~221--222]{nasa_soa_2026}.                &
+  Requires addressing, arbitration or routing, synchronization, and
+  network-level fault management. Shared-bus behaviour, node failures, and any
+  redundancy-management strategy must be defined and verified
+  \cite{ecss_canbus,ecss_spacewire}.                                                    \\ \hline
+
+  Payload pass-through                                           &
+  The OBC controls the payload, while high-rate data travels directly between
+  the payload, mass memory, FPGA, and RF subsystem.              &
+  Avoids loading the housekeeping bus or copying all payload data through the
+  primary MCU, while allowing a dedicated path to support higher throughput
+  \cite[pp.~222--223]{nasa_soa_2026}.                            &
+  Requires separate control and data paths, flow control, buffering, and an OBC
+  mechanism to isolate or reset the data path. The OBC must retain sufficient
+  status and fault visibility to manage the path safely.                                \\ \hline
+
+  Hybrid dual-plane                                              &
+  A low-speed CAN or stack bus carries commands and housekeeping data, while
+  dedicated Ethernet, SpaceWire, or SerDes links carry payload data. NASA
+  describes this mixed topology in
+  \cite[pp.~222--223]{nasa_soa_2026}.                            &
+  Combines a robust housekeeping network with scalable payload throughput.
+  Separating control and high-rate traffic can reduce contention and improve
+  fault containment between traffic classes.                     &
+  Requires two interface classes, additional integration and verification, and
+  clear ownership of commands, telemetry, timing, and high-rate data. Fault
+  detection and recovery must be coordinated across both planes.                        \\ \hline
+\end{longtable}
+
+Redundancy is not necessarily a separate base topology and may instead be
+applied selectively to critical links, buses, or nodes within any of the
+architectures above. It can improve availability, but adds transceivers,
+wiring, connector pins, power consumption, software logic, and verification
+effort \cite{nasa_soa_2026,ecss_canbus}.
+
+For the mission, the interconnect as well as the protocol bouquet selection will
+want to target higher throughput interfaces for RF and PAY subsystems, and thus
+will generally be dictated by them. In the spirit of a generic design, selecting
+a higher-speed interface is favoured, yet this might collide with the
+interconnect architecture selection since certain interfaces require specific
+connections that may not, for example, be routed through PC/104 due to signal
+integrity requirements (e.g. SpaceFibre). The stack-up requirements and/or
+constraints might also be driven by Mechanical subsystem.
+Consequently, interface selection should balance throughput with connector
+capability, harness length, routing, and signal-integrity constraints rather
+than relying on nominal data rate alone \cite{ecss_spacewire,ecss_spacefibre}.
+
+
+The following table summarizes candidate ADCS–spacecraft bus integration architectures.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{0.20\textwidth}|p{0.40\textwidth}|p{0.34\textwidth}|}
+\caption{Candidate ADCS--Spacecraft Bus Integration Architectures}
+\label{tab:adcs_bus_integration}\\
+\hline
+\textbf{Bus integration architecture} &
+\textbf{Description} &
+\textbf{Example designs} \\
+\hline
+\endfirsthead
+
+\multicolumn{3}{c}%
+{{\tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{Bus integration architecture} &
+\textbf{Description} &
+\textbf{Example designs} \\
+\hline
+\endhead
+
+\hline
+\multicolumn{3}{r}{{Continued on next page}} \\
+\endfoot
+
+\hline
+\endlastfoot
+
+\textbf{Standalone ADCS connected to the spacecraft bus}
+&
+The ADCS is a separate subsystem with its own processor and control software. 
+The spacecraft OBC sends commands and receives telemetry through a data 
+interface, while the ADCS independently performs attitude estimation and 
+control. Power is normally supplied separately by the EPS rather than through 
+the communications bus.
+&
+\textbf{CubeSpace CubeADCS Gen 2:} separate ADCS connected to the client OBC 
+through CAN, UART, I\textsuperscript{2}C, RS-422, or RS-485; CubeSpace 
+recommends connecting at least CAN and UART \cite[pp.~15--16]{cubespace_cubeadcs_gen2}.
+ A second CAN interface connects the ADCS computer to internal sensor and 
+ actuator nodes \cite[p.~17]{cubespace_cubeadcs_gen2}. The PC/104-format OBC, 
+ EPS, and ADCS interface is documented in the connector pinout 
+ \cite[pp.~21--22]{cubespace_cubeadcs_gen2}.
+\\
+\hline
+
+\textbf{ADCS integrated into the bus OBC}
+&
+The primary OBC executes the ADCS software and directly interfaces with attitude
+ sensors and actuator-driving electronics. This reduces processor and board count, 
+ but attitude control becomes dependent on the OBC's availability, scheduling, 
+ and fault recovery.
+&
+\textbf{GomSpace NanoMind A3200:} CubeSat and nanosatellite OBC incorporating a
+ three-axis magnetometer, three-axis gyroscope, and three bidirectional PWM 
+ outputs intended for external magnetorquers \cite[pp.~4, 6]{gomspace_nanomind_a3200}.
+  Its subsystem interfaces include CAN, I\textsuperscript{2}C, UART, and SPI \cite[pp.~4--5]{gomspace_nanomind_a3200}.
+\\
+\hline
+
+\textbf{Combined bus computer and ADCS module}
+&
+One avionics assembly contains an autonomous ADCS controller together with an
+ additional processor that may perform OBC or payload-processing functions. The
+  functions may share the same mechanical enclosure without necessarily sharing 
+  the same processor.
+&
+\textbf{AAC Clyde Space iADCS400:} autonomous ADCS that can house an optional
+ CP400 OBC or payload processor within the same assembly. The system provides
+  a standard I\textsuperscript{2}C interface and optional RS-422, RS-485, UART, 
+  and CAN interfaces \cite[p.~1]{aac_iadcs400}.
+\\
+\hline
+
+\textbf{Distributed bus architecture}
+&
+ADCS functions are divided among a central controller and intelligent remote
+ sensors or actuators. Peripheral devices perform local sensing, processing, or
+  low-level control and communicate with the central ADCS computer through one
+   or more subsystem buses.
+&
+\textbf{CubeSpace CubeADCS Gen 2:} uses a dedicated internal CAN interface for
+ connected sensor and actuator nodes \cite[pp.~17, 22]{cubespace_cubeadcs_gen2}.
+
+\textbf{Rocket Lab ST-16RT2:} star tracker containing an onboard processor and
+ star catalogue; it outputs attitude quaternions and angular rates and uses two
+  half-duplex RS-485 command and telemetry interfaces \cite[p.~1]{rocketlab_st16rt2}.
+
+\textbf{GomSpace NanoSense M315:} remote nanosatellite magnetometer with an
+ I\textsuperscript{2}C interface, intended for placement away from magnetic
+  disturbance sources \cite[p.~4]{gomspace_nanosense_m315}.
+\\
+\hline
+
+\end{longtable}
+
+
+
+\section{Peripherals}
+
+This section reviews the common peripherals that are found on OBCs surveyed by
+NASA's SOAs, as well as on OBCs designed by Canadian academic design teams. Details about volatile and non-volatile memory can be found in Tables~\ref{tab:volatile_memory} and~\ref{tab:non_volatile_memory}, respectively. Other types of peripherals are summarized in Table~\ref{tab:obc_peripherals}. General considerations related to peripherals revolve around external vs internal peripherals since modern day SoCs contain
+many of the necessary peripherals on the same chip.
+
+\renewcommand{\arraystretch}{1.25}
+
+\subsection*{Volatile Working Memory}
+
+Volatile working memory, which loses functionality when the electrical power is disrupted, acts as high-speed temporary storage. For a CubeSat, it enables real-time software tasks. The primary consideration during implementation is between internal and external memory: internal memory (built within the main processor chip) reduces component count and PCB complexity; external memory provides greater capacity but introduces additional power and routing requirements. Other features such as Error-Correcting Code (ECC) can be chosen as needed; ECC RAM, which automatically detects and corrects single-bit errors, was used by ORCASat \cite{orcasat_obc_ds}.
+
+\vspace{0.5em}
+\begin{longtable}{|p{2.8cm}|p{8.8cm}|p{2.1cm}|p{2.1cm}|}
+  \caption{Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:volatile_memory}                                                                                                                                                                                                                                                         \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                          & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \endfirsthead
+  \caption[]{Volatile Memory Types, Metrics, Considerations, and Examples (Continued)}                                                                                                                                                                                                                                                                       \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                          & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  \textbf{SRAM} \newline (Static RAM)                                                                                                                                                                                                           &
+  Typically internal cache or memory within an SoC, used for low-latency code execution. Surveyed by NASA \cite[p.~218]{nasa_soa_2022} \cite[p.~234]{nasa_soa_2023} \cite[p.~239]{nasa_soa_2024} \cite[p.~223]{nasa_soa_2026}.                  &
+  10-25~ns access time \cite{nasa_soa_2026}                                                                                                                                                                                                     &
+  4-32~Mb \cite{nasa_soa_2026}                                                                                                                                                                                                                                                                                                                               \\ \hline
+
+  \textbf{DRAM} \newline (Dynamic RAM)                                                                                                                                                                                                          &
+  High-density external volatile memory that uses single-transistor, single-capacitor cells. Surveyed across NASA missions \cite[p.~218]{nasa_soa_2022} \cite[p.~234]{nasa_soa_2023} \cite[p.~239]{nasa_soa_2024} \cite[p.~223]{nasa_soa_2026}. &
+  25~ns access time \cite{nasa_soa_2026}                                                                                                                                                                                                        &
+  N/A                                                                                                                                                                                                                                                                                                                                                        \\ \hline
+
+  \textbf{SDRAM} \newline (Synchronous DRAM)                                                                                                                                                                                                    &
+  High-density external memory synchronized with the system clock; utilized externally by RADSAT-SK for general runtime tasks \cite{radsat_sk_obc_git}.                                                                                         &
+  N/A                                                                                                                                                                                                                                           &
+  N/A                                                                                                                                                                                                                                                                                                                                                        \\ \hline
+
+  \textbf{DDR3} \newline (Double Data Rate 3)                                                                                                                                                                                                   &
+  High-speed third-generation SDRAM; Dalhousie University’s LORIS uses 256~MB DDR3 \cite{loris_obc_pub}.                                                                                                                                        &
+  13-15~ns \cite[pp. 67-70]{micron_ddr3_ds}                                                                                                                                                                                                     &
+  4~GB \cite[p.1]{micron_ddr3_ds}                                                                                                                                                                                                                                                                                                                            \\ \hline
+\end{longtable}
+
+\vspace{1.5em}
+
+\subsection*{Non-Volatile Program and Mass Memory}
+
+\vspace{0.5em}
+\begin{longtable}{|p{2.8cm}|p{8.8cm}|p{2.1cm}|p{2.1cm}|}
+  \caption{Non-Volatile Memory Types, Metrics, Considerations, and Examples} \label{tab:non_volatile_memory}                                                                                                                                                                                                                                                                                                                                                \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                                                                                                                         & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \endfirsthead
+  \caption[]{Non-Volatile Memory Types, Metrics, Considerations, and Examples (Continued)}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
+  \textbf{Memory Type}                                                                                                                                                                                                                                                                                                                         & \textbf{Description, Considerations, \& Examples} & \textbf{Estimated Speed} & \textbf{Estimated Capacity} \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  \textbf{MRAM} \newline (Magnetoresistive)                                                                                                                                                                                                                                                                                                    &
+  High-endurance, radiation-tolerant non-volatile memory that relies on magnetic states to store data;typically used as internal or external storage for persistent system state. Used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}. &
+  300~ns access time \cite[p.~224]{nasa_soa_2026}
+                                                                                                                                                                                                                                                                                                                                               &
+  up to 8~Gb \cite{avalanche_mram_endurance_2026}
+  \\ \hline
+
+  \textbf{FRAM} \newline (Ferroelectric RAM)                                                                                                                                                                                                                                                                                                   &
+  Low-power, fast-write non-volatile memory (internal or external) that stores memory due to its ferroelectric properties; electric dipoles stay in place even without power \cite[p.~229]{nasa_soa_2023}.                                                                                                                                     &
+  300~ns access time \cite[p.~224]{nasa_soa_2026}                                                                                                                                                                                                                                                                                              &
+  up to 16~Mb \cite{avalanche_mram_endurance_2026}
+  \\ \hline
+
+  \textbf{NAND Flash}                                                                                                                                                                                                                                                                                                                          &
+  External storage where memory cells are connected in series; deployed in redundant configurations on the Andes OBC \cite[p.~232]{nasa_soa_2024} \cite[p.~230]{nasa_soa_2026}.                                                                                                                                                                &
+  25--50~$\mu$s read access time \cite{aichiplink_nand_nor_2026}
+                                                                                                                                                                                                                                                                                                                                               &
+  128~Mb--2Tb \cite{micron_nor_nand}
+  \\ \hline
+
+  \textbf{NOR Flash}                                                                                                                                                                                                                                                                                                                           &
+  External storage where memory cells are connected in parallel; used by Athena \cite{athena_obc_site} and ORCASat \cite{orcasat_obc_site}.                                                                                                                                                                                                    &
+  10--100~ns read access time \cite{aichiplink_nand_nor_2026}                                                                                                                                                                                                                                                                                  &
+  128~Mb--2~Gb \cite{micron_nor_nand}
+  \\ \hline
+\end{longtable}
+
+Non-volatile mass memory is persistent computer storage that retains stored data without requiring a continuous power supply, unlike volatile memory. It can store system boot code, flight software images, and long-term scientific data. Unlike the considerations for volatile memory, selection for non-volatile memory depends on many factors, including capacity, write endurance, retention, access speed, boot reliability, and susceptibility to radiation-induced corruption. Redundant boot images and error detection should be considered. After choosing a memory type, the packaging can be considered. For example, an eMMC (embedded MultiMediaCard) is a high-density external mass storage featuring an integrated flash controller; used by the C3S OBC \cite[p.~229]{nasa_soa_2023} and by LORIS (4~GB eMMC) \cite{loris_obc_pub}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{6.2cm}|p{6.0cm}|}
+  \caption{Common OBC peripheral classes} \label{tab:obc_peripherals}          \\ \hline
+  \textbf{Peripheral Class}                                                  &
+  \textbf{Examples}                                                          &
+  \textbf{Primary Considerations}                                              \\ \hline
+  \endfirsthead
+  \caption[]{Common OBC peripheral classes (Continued)}                        \\ \hline
+  \textbf{Peripheral Class}                                                  &
+  \textbf{Examples}                                                          &
+  \textbf{Primary Considerations}                                              \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Watchdog, reset, and supervisor circuitry                                  &
+  The C3S OBC uses a multi-level watchdog
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}; the Aerospacelab OBC includes a
+  radiation-hardened supervisor MCU and watchdog
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~229]{nasa_soa_2026}.
+  NASA discusses watchdogs and power cycling as fault-mitigation mechanisms
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~220--222]{nasa_soa_2026}.                                        &
+  An external watchdog is preferable for recovery from processor lock-up.
+  Consider independent clocks, reset coverage, timeout configuration,
+  communications watchdogs, and selective power cycling.                       \\ \hline
+
+  Timers and timekeeping                                                     &
+  NASA identifies PLLs, capture/compare units, and time-processing units as
+  common OBC peripherals
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~224]{nasa_soa_2026}.
+  Timers are integrated within the STM32L4, TMS570, and i.MX6DL devices used by
+  the surveyed academic OBCs
+  \cite{stm32l4_vst104_pub,athena_obc_ti_prod,orcasat_obc_ds,loris_obc_nxp}. &
+  Used for scheduling, timestamping, watchdog servicing, and waveform
+  generation. Clock drift, oscillator redundancy, synchronization, and
+  operation during processor resets must be considered.                        \\ \hline
+
+  Analog and discrete I/O                                                    &
+  NASA lists GPIO, ADC, and DAC peripherals in each avionics survey
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~224--225]{nasa_soa_2026}.
+  LORIS exposes GPIO, PWM, and ADC interfaces
+  \cite{loris_obc_pub,loris_obc_nxp}.                                        &
+  Used for analog telemetry, enables, inhibits, deployment signals, and simple
+  sensors. Consider voltage compatibility, input protection, ADC accuracy,
+  safe reset states, and whether signals require isolation or redundancy.
+  \\ \hline
+
+  Debug and programming interfaces                                           &
+  NASA lists JTAG, ISP, ICSP, BDM, BITP, and DB9 interfaces
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[p.~225]{nasa_soa_2026}.                                              &
+  Required for programming, boundary scan, manufacturing tests, and debugging.
+  Flight hardware should provide controlled physical access and prevent
+  unintended entry into debug or programming modes.                            \\ \hline
+
+  Optional integrated navigation peripherals                                 &
+  The EnduroSat OBC is available with integrated GNSS
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~230]{nasa_soa_2026}.                                              &
+  Integration can reduce board count and harnessing, but may couple the OBC
+  lifecycle to a specific receiver and complicate antenna placement, RF
+  isolation, replacement, and independent fault recovery.                      \\ \hline
+\end{longtable}
+
+[TODO: survey each class of peripherals in more detail]
+
+\section{Connections between PAY and BUS}
+
+Integration with PAY is probably the most significant aspect of the OBC design
+since supporting the PAY is necessary for the success of the mission in any
+capacity. The design should be generic enough to fit a wide array of payloads,
+therefore commecial standalone OBCs are considered during the review since these
+are essentially what we strive to mimic with our design. The following
+considerations are of interest:
+
+\begin{enumerate}
+  \item \textbf{Data and control communication throughputs} -- that is, at what
+        rate the OBC and PAY can exchange data.
+  \item \textbf{Buffers} -- that is, how much spare volatile and non-volatile
+        memory the OBC provides to PAY to store its telemetry and mission data,
+        as well as the OBC's own data.
+  \item \textbf{Transfer mechanism} -- that is, how PAY will request the OBC to
+        let it access the data for read or write, and how it will be notified of
+        other control-level events.
+\end{enumerate}
+
+\subsection*{Practical Interface Throughput}
+
+The representative rates in Table~\ref{tab:protocol_design_space} describe
+nominal, configured, or typical interface capabilities. The useful data rate
+available to PAY at the application level can be lower because transmitted
+traffic also contains framing, addressing, error-detection information,
+acknowledgements, inter-frame gaps, and higher-level protocol overhead.
+Processing, buffering, DMA availability, bus contention, and software
+implementation may introduce additional limitations.
+
+For comparison, an interface-throughput ratio is defined as
+\begin{equation}
+  \eta_{\mathrm{throughput}}
+  =
+  \frac{R_{\mathrm{useful}}}{R_{\mathrm{nominal}}},
+\end{equation}
+where $R_{\mathrm{useful}}$ is the demonstrated useful or application-level data
+rate and $R_{\mathrm{nominal}}$ is the corresponding configured, signalling, or
+Layer-1 rate. This ratio is implementation-dependent and should not be treated
+as a universal protocol constant. Table~\ref{tab:practical_interface_throughput}
+therefore records the operating conditions associated with each reference value.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|
+  >{\raggedright\arraybackslash}p{2.6cm}|
+  >{\raggedright\arraybackslash}p{2.3cm}|
+  >{\raggedright\arraybackslash}p{2.5cm}|
+  >{\raggedright\arraybackslash}p{1.7cm}|
+  >{\raggedright\arraybackslash}p{5.6cm}|}
+  \caption{Reference practical throughput relative to nominal or configured interface rate}
+  \label{tab:practical_interface_throughput}                                                              \\ \hline
+  \textbf{Interface / Implementation} &
+  \textbf{Nominal / Configured Rate}  &
+  \textbf{Demonstrated Useful Rate}   &
+  \textbf{Ratio}                      &
+  \textbf{Condition and Source}                                                                           \\ \hline
+  \endfirsthead
+
+  \caption[]{Reference practical throughput relative to nominal or configured interface rate (Continued)} \\ \hline
+  \textbf{Interface / Implementation} &
+  \textbf{Nominal / Configured Rate}  &
+  \textbf{Demonstrated Useful Rate}   &
+  \textbf{Ratio}                      &
+  \textbf{Condition and Source}                                                                           \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  CAN (SRS-4, CSP)                    &
+  1.00~Mbit/s                         &
+  0.45~Mbit/s                         &
+  45.0\%                              &
+  Satlab application-layer goodput using CSP over CAN. The same value is
+  reported for 217-byte and 1024-byte application frames
+  \cite{satlab_srs4}.                                                                                     \\ \hline
+
+  Classical CAN                       &
+  500~kbit/s                          &
+  $\approx$281~kbit/s                 &
+  $\approx$56.2\%                     &
+  OTH Regensburg/CiA measured implementation using an 8-byte user payload and
+  227.6~$\mu$s end-to-end message-processing time
+  \cite{cia_canfd_comparison}.                                                                            \\ \hline
+
+  CAN FD                              &
+  1~Mbit/s arbitration;
+  4~Mbit/s data phase                 &
+  $\approx$2.46~Mbit/s                &
+  $\approx$61.5\%$^{\ast}$            &
+  OTH Regensburg/CiA measurement using a 64-byte user payload and
+  208.3~$\mu$s end-to-end message-processing time
+  \cite{cia_canfd_comparison}.                                                                            \\ \hline
+
+  RS-422 (SRS-4, CSP)                 &
+  12.5~Mbit/s                         &
+  9.47--9.74~Mbit/s                   &
+  75.8--77.9\%                        &
+  Satlab application-layer goodput. The lower value uses 217-byte frames and
+  the upper value uses 1024-byte frames \cite{satlab_srs4}.                                               \\ \hline
+
+  RS-485                              &
+  Implementation-dependent            &
+  ---                                 &
+  ---                                 &
+  No directly comparable application-goodput percentage was identified in the
+  reviewed sources. RS-485 specifies the electrical layer, so useful throughput
+  depends on the serial framing, packet protocol, bus loading, and half-duplex
+  turnaround used by the implementation \cite{adi_an960}.                                                 \\ \hline
+
+  UART                                &
+  128~kbaud                           &
+  86.2~kbaud                          &
+  $\approx$67.3\%                     &
+  TI TMS320TCI6616 internal-loopback measurement with one start bit, eight data
+  bits, one parity bit, and one stop bit; L2 memory was used as the source and
+  destination \cite{ti_keystone_throughput}.                                                              \\ \hline
+
+  I\textsuperscript{2}C               &
+  400~kHz SCL                         &
+  351.7--354.5~kbit/s                 &
+  87.9--88.6\%                        &
+  TI TMS320TCI6616 internal-loopback benchmark using EDMA and 256--1024-byte
+  read/write transfers \cite{ti_keystone_throughput}.                                                     \\ \hline
+
+  SPI                                 &
+  66~Mbit/s                           &
+  57~Mbit/s                           &
+  $\approx$86.4\%                     &
+  TI TMS320TCI6616 SPI benchmark using DMA-assisted transfers; the documented
+  implementation includes idle cycles between words
+  \cite{ti_keystone_throughput}.                                                                          \\ \hline
+
+  USB 2.0 High-Speed Bulk             &
+  480~Mbit/s                          &
+  43.8~MB/s
+  (350.4~Mbit/s)                      &
+  $\approx$73.0\%                     &
+  Cypress/Infineon FX2LP measured bulk-transfer test on an Intel ICH9 USB 2.0
+  host running Windows~7, with data generated internally by the FX2LP
+  \cite{infineon_an4053}.                                                                                 \\ \hline
+
+  Ethernet (SRS-4, UDP/IP)            &
+  100~Mbit/s                          &
+  53.04--84.30~Mbit/s                 &
+  53.0--84.3\%                        &
+  Satlab application-layer goodput for 217-byte and 1024-byte frames,
+  respectively. Satlab identifies these values as CPU-limited rather than
+  protocol-overhead-limited \cite{satlab_srs4}.                                                           \\ \hline
+
+  SpaceWire                           &
+  200~Mbit/s signalling               &
+  152--160~Mbit/s                     &
+  76--80\%                            &
+  STAR-Dundee reference for current radiation-tolerant SpaceWire technology:
+  approximately 160~Mbit/s unidirectional or 152~Mbit/s bidirectional per link
+  \cite{stardundee_spacewire}.                                                                            \\ \hline
+
+  SpaceFibre                          &
+  6.25~Gbit/s/lane                    &
+  $\approx$4.6--4.8~Gbit/s            &
+  $\approx$73.6--76.8\%               &
+  STAR-Dundee STAR-Ultra single-lane router reference: approximately
+  4.8~Gbit/s unidirectional or 4.6~Gbit/s bidirectional per port
+  \cite{stardundee_spacefibre_2024}.                                                                      \\ \hline
+\end{longtable}
+
+\noindent
+\textit{$^{\ast}$The CAN FD ratio is shown relative to the 4~Mbit/s data-phase
+  rate. The arbitration phase operates at a separate 1~Mbit/s rate, so this ratio
+  is not directly equivalent to the single-rate interface ratios.}
+
+The surveyed results do not support applying one universal utilization factor to
+all interfaces. In the referenced implementations, useful throughput ranges from
+approximately 45\% of the configured rate for CSP over CAN on the SRS-4 to
+approximately 80--90\% for several sustained point-to-point or long-transfer
+interfaces. Differences arise from framing, payload size, arbitration or bus
+sharing, processing architecture, DMA support, and software overhead. These
+ratios should therefore be treated as reference points for preliminary GOOSE
+sizing rather than guaranteed performance. The selected GOOSE implementation
+should be benchmarked directly when PAY throughput becomes a driving
+requirement.
+
+\subsection*{Throughput Margin}
+
+Demonstrated goodput and engineering margin are treated separately. Goodput
+accounts for protocol and implementation losses, while engineering margin
+reserves unused capacity for requirement growth, contention, timing variation,
+and other uncertainties. NASA software-engineering guidance provides historical
+Marshall Space Flight Center examples of data-bus-throughput margins of 35\% at
+CDR, 25\% at TRR, and 20\% at launch, while cautioning that the appropriate
+margin depends on how the resource is defined and on project context
+\cite{nasa_resource_margins}. These values are reference guidance and are not
+adopted as GOOSE requirements at this stage.
+
+A preliminary allocated rate may therefore be represented as
+\begin{equation}
+  R_{\mathrm{allocated}}
+  =
+  R_{\mathrm{useful}}(1-M),
+\end{equation}
+where $M$ is the selected project throughput margin.
+
+\subsection*{Payload Buffering Considerations}
+
+At the system level, PAY data may be held temporarily in volatile memory before
+being processed, transferred to non-volatile mass storage, or forwarded to the
+RF subsystem. Volatile memory therefore provides short-term working space for
+incoming data, while non-volatile memory can retain larger data products until
+they can be processed or downlinked. As shown in
+Table~\ref{tab:appendix_b_commercial_obcs}, commercial OBCs commonly provide
+both forms of memory; however, their total installed memory does not necessarily
+represent the amount that can be allocated specifically to PAY.
+
+The required buffering depends on the PAY data pattern. Burst-oriented payloads,
+such as imaging systems, require enough temporary capacity to retain the largest
+expected data product until it can be transferred. Continuous payloads instead
+require the sustained processing, storage, or forwarding rate to remain
+comparable to the incoming data rate, since buffering can only absorb temporary
+rate differences. PAY integration requirements should therefore identify the
+expected maximum burst size, sustained data rate, whether PAY can pause its
+transmission, and whether PAY can retain data locally when the OBC is not ready.
+
+A comprehensive survey of commercial OBC platforms and their payload integration parameters is provided in Appendix~\ref{sec:appendix_b} (Table~\ref{tab:appendix_b_commercial_obcs}). Figures~\ref{fig:payload_data_throughput}, \ref{fig:control_throughput}, and \ref{fig:memory_capacity_distribution} summarize the data rates and memory capacities observed across commercial platforms.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Plot 1: Payload Data Interface Throughput},
+        xlabel={Data Throughput (bit/s)},
+        ylabel={Protocol / Interface},
+        symbolic y coords={SPI, RS-422, SpaceWire, Ethernet},
+        ytick={SPI, RS-422, SpaceWire, Ethernet},
+        xmin=1e6, xmax=3e10,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=5.5cm,
+        width=13.5cm,
+        enlarge y limits=0.3
+      ]
+      % SPI: 16 MHz, 40 MHz -> 16 Mbit/s, 40 Mbit/s (points/range)
+      \addplot[thick, mark=*, blue] coordinates {(16e6,SPI) (40e6,SPI)};
+      \draw[very thick, blue] (axis cs:16e6,SPI) -- (axis cs:40e6,SPI);
+
+      % RS-422: 2.2 - 3 Mbit/s
+      \addplot[thick, mark=*, RedViolet] coordinates {(2.2e6,RS-422) (3e6,RS-422)};
+      \draw[very thick, RedViolet] (axis cs:2.2e6,RS-422) -- (axis cs:3e6,RS-422);
+
+      % SpaceWire: 50 Mbit/s, 80-150 Mbit/s, 300 Mbit/s
+      \addplot[thick, mark=*, Emerald] coordinates {(50e6,SpaceWire) (80e6,SpaceWire) (150e6,SpaceWire) (300e6,SpaceWire)};
+      \draw[very thick, Emerald] (axis cs:80e6,SpaceWire) -- (axis cs:150e6,SpaceWire);
+
+      % Ethernet: 100 Mbit/s, 1 Gbit/s, 10 Gbit/s
+      \addplot[thick, mark=*, Bittersweet] coordinates {(100e6,Ethernet) (1e9,Ethernet) (10e9,Ethernet)};
+      \draw[very thick, Bittersweet] (axis cs:100e6,Ethernet) -- (axis cs:10e9,Ethernet);
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Published payload data interface rates from the commercial OBC survey (Appendix~\ref{sec:appendix_b}). Values may be measured, manufacturer-stated, or nominal depending on the source; dots represent specific published figures and lines represent observed ranges. Practical application-level throughput is considered separately in Table~\ref{tab:practical_interface_throughput}.}
+  \label{fig:payload_data_throughput}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Plot 2: Control \& Event Interface Throughput},
+        xlabel={Interface Rate (bit/s)},
+        ylabel={Protocol / Interface},
+        symbolic y coords={RS485_KISS, I2C_CSP, CAN_CSP},
+        ytick={RS485_KISS, I2C_CSP, CAN_CSP},
+        yticklabels={RS-485/KISS, {$\text{I}^2\text{C}$ (CSP)}, CAN (CSP)},
+        xmin=1e4, xmax=5e6,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=4.8cm,
+        width=13.5cm,
+        enlarge y limits=0.35
+      ]
+      % RS-485/KISS: 38.4 kbaud - 115.2 kbaud
+      \addplot[thick, mark=*, RawSienna] coordinates {(38.4e3,RS485_KISS) (115.2e3,RS485_KISS)};
+      \draw[very thick, RawSienna] (axis cs:38.4e3,RS485_KISS) -- (axis cs:115.2e3,RS485_KISS);
+
+      % I2C (CSP): 400 kHz (400 kbit/s)
+      \addplot[thick, mark=*, TealBlue] coordinates {(400e3,I2C_CSP)};
+
+      % CAN (CSP): 1 Mbit/s
+      \addplot[thick, mark=*, NavyBlue] coordinates {(1e6,CAN_CSP)};
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Published control and event interface rates from the commercial OBC survey (Appendix~\ref{sec:appendix_b}). These values are configured or published interface rates and should not be interpreted directly as application goodput; see Table~\ref{tab:practical_interface_throughput}.}
+  \label{fig:control_throughput}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{semilogxaxis}[
+        title={Memory Capacity Distribution},
+        xlabel={Capacity (Bytes)},
+        ylabel={Memory Category},
+        symbolic y coords={MassStorage, Flash, VolatileRAM},
+        ytick={MassStorage, Flash, VolatileRAM},
+        yticklabels={Mass Storage, Flash, Volatile RAM},
+        xmin=1e5, xmax=2e13,
+        xmajorgrids=true,
+        grid style=dashed,
+        height=5.8cm,
+        width=13.5cm,
+        enlarge y limits=0.3
+      ]
+      % Volatile RAM (384 kB - 24 GB)
+      \addplot[thick, mark=*, RoyalBlue] coordinates {
+          (384e3,VolatileRAM)
+          (1e6,VolatileRAM)
+          (2e6,VolatileRAM)
+          (8e6,VolatileRAM)
+          (64e6,VolatileRAM)
+          (256e6,VolatileRAM)
+          (375e6,VolatileRAM)
+          (512e6,VolatileRAM)
+          (1e9,VolatileRAM)
+          (2e9,VolatileRAM)
+          (4e9,VolatileRAM)
+          (8e9,VolatileRAM)
+          (24e9,VolatileRAM)
+        };
+      \draw[very thick, RoyalBlue] (axis cs:384e3,VolatileRAM) -- (axis cs:24e9,VolatileRAM);
+
+      % Flash (32 kB - 4 GB)
+      \addplot[thick, mark=*, DarkOrchid] coordinates {
+          (32e3,Flash)
+          (500e3,Flash)
+          (2e6,Flash)
+          (3e6,Flash)
+          (3.1e6,Flash)
+          (4e6,Flash)
+          (6e6,Flash)
+          (8e6,Flash)
+          (16e6,Flash)
+          (64e6,Flash)
+          (128e6,Flash)
+          (256e6,Flash)
+          (512e6,Flash)
+          (2e9,Flash)
+          (4e9,Flash)
+        };
+      \draw[very thick, DarkOrchid] (axis cs:32e3,Flash) -- (axis cs:4e9,Flash);
+
+      % Mass Storage (256 MB - 8.1 TB)
+      \addplot[thick, mark=*, ForestGreen] coordinates {
+          (256e6,MassStorage)
+          (2e9,MassStorage)
+          (4e9,MassStorage)
+          (8e9,MassStorage)
+          (16e9,MassStorage)
+          (32e9,MassStorage)
+          (70e9,MassStorage)
+          (233e9,MassStorage)
+          (256e9,MassStorage)
+          (8.1e12,MassStorage)
+        };
+      \draw[very thick, ForestGreen] (axis cs:256e6,MassStorage) -- (axis cs:8.1e12,MassStorage);
+    \end{semilogxaxis}
+  \end{tikzpicture}
+  \caption{Observed memory capacity ranges and data points across surveyed commercial OBCs: Volatile RAM (384~kB--24~GB), Flash/Boot NVM (32~kB--4~GB), and Non-Volatile Mass Storage (256~MB--8.1~TB).}
+  \label{fig:memory_capacity_distribution}
+\end{figure}
+
+Below in Table~\ref{tab:physical_connectors} is a survey of the OBC integration done by KP Labs.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{3.0cm}|p{8.0cm}|}
+  \caption{Physical connectors (surveyed from KP Labs Intuition-1 integration \cite{kplabs_2024})} \label{tab:physical_connectors} \\ \hline
+  \textbf{Connector Type}           &
+  \textbf{Supported Protocols}      &
+  \textbf{Notes}                                                                                                                   \\ \hline
+  \endfirsthead
+  \caption[]{Physical connectors (Continued)}                                                                                      \\ \hline
+  \textbf{Connector Type}           &
+  \textbf{Supported Protocols}      &
+  \textbf{Notes}                                                                                                                   \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Nano-D Connectors                 &
+  LVDS                              &
+  Used for direct high-speed data transfer (e.g., connected to X/S-band radio).                                                    \\ \hline
+
+  M80 Connectors                    &
+  Controller Area Network (CAN) bus &
+  Used to connect DPU supervisor module to platform OBC.                                                                           \\ \hline
+
+  Samtec LSHM                       &
+  LVDS                              &
+  Used for high-speed data streams (up to 8~Gbps) between optical instruments and data processing unit (DPU).                      \\ \hline
+\end{longtable}
+
+[TODO: review more examples]
+
+\section{SRS-4 Integration}
+
+The Satlab SRS-4 is a flagship software-defined S-band transceiver designed for
+CubeSat high-speed communications \cite{satlab_srs4}. The SRS-4 serves as a
+primary communications radio to support high-throughput payload downlink
+requirements (such as large hyperspectral image files) alongside housekeeping
+telemetry and telecommand handling.
+
+The transceiver functions as the satellite's primary voice-and-data translator
+between the On-Board Computer (OBC) and the RF antenna array. Satlab
+manufactures the SRS-4 board using the PC/104 form factor ($93.0 \times 87.2
+  \times 17.5$~mm, mass 253~g), allowing direct mechanical integration into
+standard CubeSat stackups via PC/104 header connectors and standoffs alongside
+EPS and OBC modules.
+
+Unlike legacy fixed-function analog radios, the SRS-4 utilizes a
+Software-Defined Radio (SDR) architecture with on-orbit reconfigurable
+modulation and full-duplex operation, enabling simultaneous transmission and
+reception (requiring strict RF isolation between TX and RX paths).
+
+\subsection{Electrical and Logical Interfacing}
+The logical and protocol fabric of the SRS-4 natively integrates with standard
+Command \& Data Handling (C\&DH) firmware architectures:
+\begin{itemize}
+  \item \textbf{CubeSat Space Protocol (CSP):} The SRS-4 supports CSP for
+        command, control, and data exchange with the satellite's C\&DH system
+        \cite{satlab_srs4}. CSP provides node addressing, port-based services,
+        packet routing, and datagram transport across supported interfaces
+        including CAN, I\textsuperscript{2}C, serial KISS links, and Ethernet
+        \cite{libcsp_basics,libcsp_protocol_stack}. This allows the radio to
+        operate as a networked subsystem while leaving the underlying
+        electrical link and application services to be defined during system
+        integration.
+  \item \textbf{Interfacing Links:}
+        \begin{itemize}
+          \item \textbf{OBC $\leftrightarrow$ SRS-4:} CAN-bus or RS-422
+                differential bus carrying CSP packets.
+          \item \textbf{EPS $\leftrightarrow$ SRS-4:} Wide-input power rail
+                ($5.1$--$28.8$~V), granting flexibility to EPS regulation strategies.
+          \item \textbf{SRS-4 $\leftrightarrow$ Antenna:} SMA/MCX coaxial
+                pigtail point-to-point RF link.
+          \item \textbf{Antenna $\leftrightarrow$ Ground:} Free-space S-band RF
+                link ($2200$--$2290$~MHz downlink, $2025$--$2110$~MHz uplink).
+        \end{itemize}
+\end{itemize}
+
+\subsection{Interface Throughput}
+
+The SRS-4 datasheet provides a direct product-specific comparison between
+physical interface rate and application-layer goodput. CSP over CAN provides
+approximately 0.45~Mbit/s of application goodput from a 1~Mbit/s Layer-1 rate,
+or approximately 45\%. CSP over RS-422 provides 9.47~Mbit/s with 217-byte
+frames and 9.74~Mbit/s with 1024-byte frames from a 12.5~Mbit/s Layer-1 rate,
+corresponding to approximately 75.8--77.9\% \cite{satlab_srs4}.
+
+The same datasheet reports 53.04~Mbit/s and 84.30~Mbit/s of UDP/IP
+application goodput over a 100~Mbit/s Ethernet interface for 217-byte and
+1024-byte frames, respectively, and identifies those Ethernet results as
+CPU-limited rather than protocol-overhead-limited \cite{satlab_srs4}. These
+figures illustrate why the nominal interface rate alone is not sufficient for
+GOOSE data-path sizing; frame size, higher-level protocol, and processing
+architecture can materially change the rate available to the application.
+
+\subsection{Subsystem Team Responsibilities}
+Integrating the SRS-4 into a satellite design spans multiple engineering
+domains:
+\begin{itemize}
+  \item \textbf{Electrical Subsystem:} Mechanically slots the SRS-4 board into
+        the PC/104 stack and wires the physical CAN/RS-422 bus and EPS power
+        connections.
+  \item \textbf{C\&DH Subsystem:} Provides the RTOS and CSP network fabric where
+        the SRS-4 operates as a standard CSP node on the system bus.
+  \item \textbf{Firmware Team:} Develops device drivers using Satlab's support
+        library to queue image payload downlinks, adjust TX power, and poll
+        operational telemetry (temperature, current draw, lock status).
+  \item \textbf{Power (EPS) Subsystem:} Manages the input power supply rail,
+        leveraging the SRS-4's broad $5.1$--$28.8$~V input range.
+  \item \textbf{Mission Operations Team:} Utilizes CCSDS-compliant coding and
+        standard PSK modulations to interface with commercial ground station networks
+        and feed telemetry directly into the mission control framework.
+\end{itemize}
+
+
+
+\section{COTS (Commercial Off the Shelf) Design Alternatives}
+
+\textit{Description: Determine what COTS solutions exist if we cannot produce a certain part of the subsystem in house. Find a COTS option for each in house design.}
+
+\textit{Will inform trades later on for COTS versus in house risks.}
+
+This section outlines alternative off-the-shelf components that would in part or
+in full fulfil the operating requirements of the subsystem.
+
+The following component-level COTS alternatives preserve a custom Electrical
+BUS architecture while reducing development effort for selected functions.
+They are trade-study candidates rather than flight-qualified selections;
+mission-specific part assurance, derating, and radiation assessment remain
+required \cite{ecss_cots_2025}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.0cm}|p{4.6cm}|p{4.8cm}|p{4.1cm}|}
+  \caption{Preliminary component-level COTS alternatives} \label{tab:cots_alternatives} \\ \hline
+  \textbf{Function}                                                          &
+  \textbf{Example Candidates}                                                &
+  \textbf{Potential OBC Use}                                                 &
+  \textbf{Main Trade Considerations}                                                    \\ \hline
+  \endfirsthead
+  \caption[]{Preliminary component-level COTS alternatives (Continued)}                 \\ \hline
+  \textbf{Function}                                                          &
+  \textbf{Example Candidates}                                                &
+  \textbf{Potential OBC Use}                                                 &
+  \textbf{Main Trade Considerations}                                                    \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Non-volatile storage                                                       &
+  Everspin MR25H40 SPI MRAM for critical state and logs
+  \cite{everspin_mr25h40}, and Infineon S25HL512T serial NOR flash for
+  firmware storage or recovery images \cite{infineon_s25hl512t}.             &
+  Persistent configuration, deployment state, reset history, fault logs,
+  firmware, and a recovery image.                                            &
+  Capacity, endurance, retention, write protection, boot recovery,
+  power-loss behaviour, and radiation response.                                         \\ \hline
+
+  Independent fault recovery                                                 &
+  TI TPS3431 watchdog, TPS3703 voltage supervisor, and TPS22919 load
+  switch \cite{ti_tps3431,ti_tps3703,ti_tps22919}.                           &
+  Detect processor lock-up, supervise the supply, and provide a hardware
+  reset or power-cycle path.                                                 &
+  Independence from the MCU, timeout and threshold selection, reset
+  coverage, load current, default state, and control ownership.                         \\ \hline
+
+  Timing and clocking                                                        &
+  Micro Crystal RV-3028-C7 RTC \cite{microcrystal_rv3028}, plus an
+  industrial crystal or TCXO selected using oscillator guidance
+  \cite{st_an2867}.                                                          &
+  Maintain timestamps through resets and provide stable MCU and interface
+  timing.                                                                    &
+  Backup supply, drift, calibration, startup margin, temperature stability,
+  synchronization, and PCB placement.                                                   \\ \hline
+
+  Differential bus interface                                                 &
+  TI TCAN1042-Q1 CAN/CAN-FD transceiver \cite{ti_tcan1042} or Analog
+  Devices ADM3065E RS-485 transceiver \cite{adi_adm3065e}.                   &
+  Implement the physical layer between MCU logic and a differential bus.     &
+  Common-mode range, delay, standby state, termination, fault protection,
+  isolation needs, and radiation assessment.                                            \\ \hline
+
+  Board-health monitoring                                                    &
+  TI TMP117 temperature sensor and INA238 current, voltage, and power
+  monitor \cite{ti_tmp117,ti_ina238}.                                        &
+  Provide local temperature and supply-rail telemetry for health monitoring. &
+  Placement, range, shunt sizing, conversion time, addressing, power,
+  failure response, and radiation behaviour.                                            \\ \hline
+\end{longtable}
+
+\section{System Architecture and Budgets}
+
+In this section we concern ourselves with system-level considerations such as power draw, protection mechanisms, and radiation tolerance for the purposes of overall design and integration with other teams.
+
+\subsection{Power draw}
+Based on the commercial onboard-computing systems surveyed in NASA's
+State of the Art reports
+\cite{nasa_soa_2022,nasa_soa_2023,nasa_soa_2024,nasa_soa_2026},
+OBC power consumption can be divided into three broad categories according
+to platform complexity and computational capability. The reports do not use
+a consistent average-power metric; reported values are variously identified
+as idle, static, typical, active-mode, full-load, or peak consumption.
+Consequently, Table~\ref{tab:power_trends} preserves the operating-state
+terminology used by the manufacturers.
+
+The 2022 edition identifies representative onboard-computing products but
+does not tabulate their power consumption
+\cite[Table~8-1, pp.~214--217]{nasa_soa_2022}. Quantitative power values are
+therefore drawn primarily from the 2023, 2024, and 2026 editions
+\cite[Table~8-1, pp.~228--233]{nasa_soa_2023}
+\cite[Table~8-1, pp.~230--236]{nasa_soa_2024}
+\cite[Table~8-4, pp.~229--234]{nasa_soa_2026}.
+
+\begin{longtable}{|p{2.7cm}|p{3.2cm}|p{5.0cm}|p{5.4cm}|}
+  \caption{OBC power-consumption trends and reported operating states} \label{tab:power_trends} \\ \hline
+  \textbf{Platform Complexity}
+   &
+  \textbf{Reported Power Profile}
+   &
+  \textbf{Design Characteristics}
+   &
+  \textbf{Example Designs}
+  \\ \hline
+  \endfirsthead
+  \caption[]{OBC power-consumption trends and reported operating states (Continued)}            \\ \hline
+  \textbf{Platform Complexity}
+   &
+  \textbf{Reported Power Profile}
+   &
+  \textbf{Design Characteristics}
+   &
+  \textbf{Example Designs}
+  \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Low
+  (Bare-Metal / Control)
+   &
+  \textbf{Minimum listed:} 0.05~W
+
+  \textbf{Idle/steady:} approximately 0.2--0.5~W
+
+  \textbf{Peak:} generally below 1~W
+   &
+  Simple command and data handling, housekeeping, telemetry, and fault
+  management. These systems are normally based on low-power microcontrollers
+  and execute bare-metal software or a small real-time operating system.
+  Their power consumption is relatively insensitive to computational load.
+   &
+  Pumpkin PPM family:
+  0.05~W, operating state not specified
+  \cite[p.~231]{nasa_soa_2023}
+  \cite[p.~235]{nasa_soa_2024}
+  \cite[p.~233]{nasa_soa_2026}.
+
+  AAC Clyde Space Kryten-M3:
+  0.4~W
+  \cite[p.~228]{nasa_soa_2023}
+  \cite[p.~230]{nasa_soa_2024}
+  \cite[Table~8-4]{nasa_soa_2026}.
+
+  C3S Electronics OBC:
+  0.46~W in test mode
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[p.~232]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}.
+
+  SkyLabs NANOobc-2:
+  $<0.9$~W idle and $<1$~W peak
+  \cite[p.~232]{nasa_soa_2023}
+  \cite[p.~236]{nasa_soa_2024}.
+  \\ \hline
+
+  Medium
+  (Integrated OBC)
+   &
+  \textbf{Idle:} approximately 0.2--1~W
+
+  \textbf{Nominal/steady:} approximately 1--3~W
+
+  \textbf{Peak:} approximately 1.5--5~W
+   &
+  Typical integrated CubeSat OBCs combining command and data handling,
+  mass-memory management, communication interfaces, fault protection, and
+  basic payload management. Power may vary with processor utilization,
+  interface activity, and memory access.
+   &
+  SPiN MA61C CubeSat:
+  1--1.2~W
+  \cite[p.~232]{nasa_soa_2023}
+  \cite[p.~236]{nasa_soa_2024}
+  \cite[Table~8-4]{nasa_soa_2026}.
+
+  AAC Clyde Space Sirius OBC \& TCM:
+  1.3~W
+  \cite[p.~228]{nasa_soa_2023}
+  \cite[p.~230]{nasa_soa_2024}
+  \cite[Table~8-4]{nasa_soa_2026}.
+
+  EnduroSat OBC I:
+  0.2~W idle and 1.5~W peak
+  \cite[p.~229]{nasa_soa_2023}
+  \cite[Table~8-1]{nasa_soa_2024}
+  \cite[p.~230]{nasa_soa_2026}.
+
+  Resilient Computing RadPC:
+  1.5~W
+  \cite[p.~232]{nasa_soa_2023}
+  \cite[p.~236]{nasa_soa_2024}
+  \cite[p.~233]{nasa_soa_2026}.
+
+  SatRev OBC:
+  2.8~W typical and 5~W peak
+  \cite[p.~233]{nasa_soa_2026}.
+  \\ \hline
+
+  High
+  (Edge / AI / SoM)
+   &
+  \textbf{Idle/static:} approximately 5--15~W
+
+  \textbf{Typical/active:} approximately 6--10~W
+
+  \textbf{Peak/full load:} commonly 10--20~W, with larger payload
+  computers reaching substantially higher values
+   &
+  Heterogeneous systems-on-module and payload-processing computers supporting
+  image processing, software-defined radio, autonomous navigation, data
+  compression, and machine-learning inference. Power is strongly dependent on
+  processor utilization, FPGA configuration, accelerator activity, and
+  payload duty cycle.
+   &
+  Novo Space GPU002AF:
+  6--11~W in active mode
+  \cite[p.~231]{nasa_soa_2023}
+  \cite[p.~235]{nasa_soa_2024}
+  \cite[p.~233]{nasa_soa_2026}.
+
+  KP Labs Leopard DPU:
+  7~W static and up to 10~W during deep-learning inference
+  \cite[p.~230]{nasa_soa_2023}
+  \cite[p.~234]{nasa_soa_2024}
+  \cite[p.~231]{nasa_soa_2026}.
+
+  Aitech S-A1760:
+  $\leq5$~W idle, 8--10~W under a typical CUDA load, and
+  $<20$~W at full utilization
+  \cite[p.~228]{nasa_soa_2023}
+  \cite[Table~8-1]{nasa_soa_2024}
+  \cite[Table~8-4]{nasa_soa_2026}.
+
+  EnduroSat GPC:
+  $<15$~W idle and 130~W peak
+  \cite[p.~231]{nasa_soa_2026}.
+  \\ \hline
+\end{longtable}
+
+Based on these results, a nominal power-design envelope of 1--10~W is adopted
+for the proposed OBC. This range encompasses conventional integrated CubeSat
+OBCs and moderate edge-processing workloads, while transient loads above 10~W
+are treated separately as peak operating conditions. The selected range is a
+project design boundary rather than the full commercial-hardware envelope, which
+extends from approximately 0.05~W for low-power microcontroller boards to 130~W
+peak for high-performance payload computers.
+
+  [TODO: peak loads and durations]
+
+\subsection{Protections}
+
+Protecting the electrical compenets of the BUS electronics from the harsh space
+environment is of paramount concenr to the design. This section details the
+consideraitons with respect to the design and how to achieve them
+
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{3.5cm}|p{6.5cm}|p{6.5cm}|}
+  \caption{Protection considerations} \label{tab:protection_considerations} \\ \hline
+  \textbf{Consideration}                       &
+  \textbf{Description}                         &
+  \textbf{Example solutions}                                                \\ \hline
+  \endfirsthead
+  \caption[]{Protection considerations (Continued)}                         \\ \hline
+  \textbf{Consideration}                       &
+  \textbf{Description}                         &
+  \textbf{Example solutions}                                                \\ \hline
+  \endhead
+  \hline
+  \endfoot
+
+  Mission radiation environment                &
+  Radiation exposure depends on orbit, inclination, mission duration, shielding,
+  and solar activity. Parts should be selected against a mission-specific
+  radiation analysis with an appropriate design margin
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}.          &
+  Model the expected environment using tools such as SPENVIS \cite{spenvis} or
+  CREME-MC \cite{creme_mc} and
+  select components whose test conditions exceed the predicted exposure.
+  Athena uses a TMS570 device characterized to approximately 30~krad, while
+  ORCASat selected a device tested to 6~krad
+  \cite{athena_obc_ti_app,athena_obc_ti_prod,orcasat_obc_ds}.               \\ \hline
+
+  Total ionizing dose (TID)                    &
+  TID represents cumulative ionizing-radiation exposure and can gradually alter
+  device parameters or cause permanent failure. NASA notes that many COTS parts
+  may tolerate only approximately 2--10~krad, although tolerance varies strongly
+  with device and fabrication process
+  \cite[pp.~177--178]{nasa_soa_2022}
+  \cite[pp.~191--193]{nasa_soa_2023}
+  \cite[pp.~194--196]{nasa_soa_2024}
+  \cite[pp.~191--192]{nasa_soa_2026}.          &
+  Use components with tested TID ratings, such as the VORAGO VA41630 MCU or
+  GR712RC processor, or apply shielding where COTS components cannot meet the
+  required dose
+  \cite{vorago_va41630,gaisler_gr712rc}.                                    \\ \hline
+
+  Displacement damage dose (DDD)               &
+  Displacement damage results from non-ionizing particle interactions and must
+  be considered separately from TID, particularly for sensors, optoelectronics,
+  and some semiconductor technologies
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[p.~221]{nasa_soa_2026}.                &
+  Require component-specific proton or neutron characterization rather than
+  assuming that a TID rating also covers displacement damage. Microchip
+  publishes separate proton, TID, and SEE characterization for its
+  radiation-tolerant FPGA families
+  \cite{microchip_radiation_data}.                                          \\ \hline
+
+  Single-event upset (SEU)                     &
+  An SEU changes a memory or logic state without necessarily causing permanent
+  damage. Protection is required for processor state, working memory,
+  non-volatile memory, and FPGA configuration
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}.          &
+  Use ECC or EDAC, memory scrubbing, redundant boot images, software consistency
+  checks, and configuration-immune programmable logic. The GR712RC provides
+  memory EDAC, while the RTG4 FPGA uses SEU-immune flash configuration
+  \cite{gaisler_gr712rc,microchip_rtg4}.                                    \\ \hline
+
+  Single-event latch-up (SEL)                  &
+  SEL may place a semiconductor device into a destructive high-current state.
+  The affected circuit must be detected and disconnected before permanent damage
+  occurs
+  \cite[pp.~219--220]{nasa_soa_2022}
+  \cite[pp.~235--236]{nasa_soa_2023}
+  \cite[pp.~240--241]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}.          &
+  Select SEL-immune components where practical and place vulnerable loads behind
+  current-limited, resettable power switches. The 3D PLUS 3DPM0168 LCL provides
+  overcurrent detection, load disconnection, and controlled repowering
+  \cite{vorago_va41630,three_d_plus_protection_switch}.                     \\ \hline
+
+  COTS versus radiation-hardened components    &
+  COTS components generally provide higher performance, lower cost, and better
+  availability, while radiation-hardened parts provide greater environmental
+  assurance. Small spacecraft frequently use a hybrid approach
+  \cite[p.~219]{nasa_soa_2022}
+  \cite[p.~235]{nasa_soa_2023}
+  \cite[p.~240]{nasa_soa_2024}
+  \cite[pp.~221--222]{nasa_soa_2026}.          &
+  Combine a COTS processor with radiation-tolerant supervisors, memories,
+  programmable logic, or power-control circuitry. NEUDOSE uses a COTS AVR32
+  primary processor with a secondary Zynq-7000 system designed using both
+  radiation-hardened and non-radiation-hardened components
+  \cite{neudose_obc_pub}.                                                   \\ \hline
+
+  Watchdog and fault recovery                  &
+  Radiation-induced faults may leave the processor or communication interface
+  unresponsive. Recovery mechanisms should remain operational even when the
+  primary processor has failed
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~219--220,222]{nasa_soa_2026}.      &
+  Use an independent watchdog, reset supervisor, communication timeout, and
+  individually switchable power domains. The GR712RC includes watchdog support,
+  while external protection switches can independently cycle affected loads
+  \cite{gaisler_gr712rc,three_d_plus_protection_switch}.                    \\ \hline
+
+  Memory protection                            &
+  Processor memory, mass storage, boot images, and FPGA configuration can have
+  different radiation responses and should be assessed independently. NASA
+  identifies ECC, EDAC, scrubbing, and redundant storage as common mitigation
+  methods
+  \cite[pp.~218--220]{nasa_soa_2022}
+  \cite[pp.~234--236]{nasa_soa_2023}
+  \cite[pp.~239--241]{nasa_soa_2024}
+  \cite[pp.~221--224]{nasa_soa_2026}.          &
+  Use ECC-protected working memory, radiation-tolerant MRAM, redundant boot
+  images, and TMR-protected non-volatile storage. Example devices include
+  GR712RC EDAC-protected memory and radiation-tolerant MRAM and SPI NOR modules
+  \cite{gaisler_gr712rc,three_d_plus_mram,three_d_plus_spi_nor}.            \\ \hline
+
+  Redundancy and voting                        &
+  Redundancy may be applied at the logic, processor, memory, board, or subsystem
+  level. It improves fault tolerance but increases power, mass, synchronization,
+  and verification requirements
+  \cite[p.~220]{nasa_soa_2022}
+  \cite[p.~236]{nasa_soa_2023}
+  \cite[p.~241]{nasa_soa_2024}
+  \cite[pp.~219--222]{nasa_soa_2026}.          &
+  Use lockstep processors, cold-redundant OBCs, triple-modular redundancy, or
+  distributed backup controllers. Athena and ORCASat use lockstep-capable safety
+  MCUs, while 3D PLUS offers TMR-protected SPI NOR memory
+  \cite{athena_obc_ti_prod,orcasat_obc_ds,three_d_plus_spi_nor}.            \\ \hline
+
+  Radiation-hardened-by-design (RHBD)          &
+  RHBD improves radiation tolerance through hardened circuit cells,
+  radiation-aware layout, specialized device structures, and selective
+  hardening of vulnerable functions
+  \cite[p.~222]{nasa_soa_2026}.                &
+  Use RHBD devices such as VORAGO HARDSIL-based Cortex-M MCUs or Microchip RTG4
+  FPGAs with radiation-hardened registers and flash-based configuration
+  \cite{vorago_va41630,microchip_rtg4}.                                     \\ \hline
+
+  Structural and localized shielding           &
+  The spacecraft structure provides some inherent shielding, but protection
+  depends on material, thickness, component placement, and shielding in every
+  direction. Local shielding may be more mass-efficient than increasing the
+  thickness of the entire structure
+  \cite[pp.~176--179]{nasa_soa_2022}
+  \cite[pp.~190--194]{nasa_soa_2023}
+  \cite[pp.~193--196]{nasa_soa_2024}
+  \cite[pp.~190--193]{nasa_soa_2026}.          &
+  Place sensitive processors or memories within aluminium, titanium, graded-Z,
+  or composite shields. Commercial localized shielding products, such as
+  Plasteel, target high-performance COTS processors, cameras, and memories
+  \cite{cosmic_plasteel,shields1_radiation_experiment}.                     \\ \hline
+
+  Secondary-radiation effects                  &
+  Increasing shield thickness does not always proportionally reduce dose.
+  High-energy particles interacting with shielding may generate secondary
+  particles, making material choice and layer ordering important
+  \cite[pp.~176--179]{nasa_soa_2022}
+  \cite[pp.~193--196]{nasa_soa_2024}
+  \cite[pp.~190--193]{nasa_soa_2026}.          &
+  Evaluate shielding using particle-transport simulation rather than aluminium
+  thickness alone. Graded-Z shielding combines materials with different atomic
+  numbers to reduce secondary radiation
+  \cite{shields1_radiation_experiment}.                                     \\ \hline
+
+  Surface charging and electrostatic discharge &
+  Surface charging and electrostatic discharge can damage or disrupt electrical
+  systems. This is separate from TID and single-event-effect protection
+  \cite[p.~179]{nasa_soa_2022}
+  \cite[p.~194]{nasa_soa_2023}
+  \cite[pp.~196--197]{nasa_soa_2024}
+  \cite[p.~193]{nasa_soa_2026}.                &
+  Use conductive bonding, controlled grounding paths, charge-dissipative
+  coatings, and appropriate PCB surface treatments. The Shields-1 experiment
+  included a charge-dissipation film together with radiation-shielding
+  technologies
+  \cite{shields1_radiation_experiment}.                                     \\ \hline
+\end{longtable}
+
+
+
+\section{Conclusion}
+
+This report outlined the state-of-the-art OBC review from both internal design
+stadpoint through the Design Space section as well as system integration
+standpoint through System Architecture section. Internal design is broken into
+selection of control unit, protocol set and interconnect topology, as well as
+periptheral array. Each of these compoenents have a wide selection of
+compoenetns and designs which will need to be researched further and used as
+part of trades once requirements are established. Further research and
+collaboration with other subsystems is also required to guide the internal
+design decisions for this subsystem.
+\clearpage
+\appendix
+\begin{landscape}
+  \phantomsection
+  \section{Appendix A: Academic OBCs}
+  \makeatletter
+  \def\@currentlabel{A}
+  \makeatother
+  \label{sec:appendix_a}
+
+  \begin{longtable}{|p{2.6cm}|p{2.0cm}|p{3.8cm}|p{3.8cm}|p{1.4cm}|p{6.4cm}|p{1.0cm}|}
+    \hline \textbf{Name}                                                                                                                                                                                                                                                              & \textbf{Team} & \textbf{MCU} & \textbf{Protocols} & \textbf{Standard} & \textbf{Notes} & \textbf{Ref} \\\hline \endhead
+    \hline
+    STM32L4 PC/104 academic OBC                                                                                                                                                                                                                                                       &
+    VST104 thesis design                                                                                                                                                                                                                                                              &
+    STM32L4—ARM-based                                                                                                                                                                                                                                                                 &
+    CAN                                                                                                                                                                                                                                                                               &
+    PC104                                                                                                                                                                                                                                                                             &
+    pc 104 cubesat design.                                                                                                                                                                                                                                                            &
+    \cite{stm32l4_vst104_pub}                                                                                                                                                                                                                                                                                                                                                                 \\ \hline
+    Athena OBC                                                                                                                                                                                                                                                                        &
+    University of Alberta (Albertasat)                                                                                                                                                                                                                                                &
+    TI TMS570LC4357 (ARM Cortex R5F)                                                                                                                                                                                                                                                  &
+                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                      &
+    Embedded memory type: Flash. Features ideal for satellite OBC application, including radiation \& space reliability (rad-hard, SEL immune 48 MeV at 125\textdegree{}C, LAT 30krad), high computational performance (lockstep dual-core compare, 300MHz CPU clock, 1.66DMIPS/MHz). &
+    \cite{athena_obc_site, athena_obc_ti_prod}                                                                                                                                                                                                                                                                                                                                                \\ \hline
+    Orcasat OBC                                                                                                                                                                                                                                                                       &
+    University of Victoria                                                                                                                                                                                                                                                            &
+    TI TMS570LS0714 (Dual ARM Cortex-R4F)                                                                                                                                                                                                                                             &
+                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                      &
+    Embedded memory type: Flash. Operates in lockstep, ECC integrated flash \& RAM banks, radiation-tested up to 6 krad, 80MHz core clock.                                                                                                                                            &
+    \cite{orcasat_obc_site, orcasat_obc_ds}                                                                                                                                                                                                                                                                                                                                                   \\ \hline
+    LORIS OBC                                                                                                                                                                                                                                                                         &
+    Dalhousie University                                                                                                                                                                                                                                                              &
+    NXP i.MX6DL (Single-core ARM Cortex-A9)                                                                                                                                                                                                                                           &
+    USB 2.0; SPI; I2C; PWM; UART; GPIO; ADC                                                                                                                                                                                                                                           &
+                                                                                                                                                                                                                                                                                      &
+    Embedded memory type: Flash. Low profile, power efficient SoC SBC. 4GB eMMC flash storage, 256MB DDR3 RAM, 800MHz operational frequency, -40\textdegree{}C to 85\textdegree{}C temperature range.                                                                                 &
+    \cite{loris_obc_pub, loris_obc_nxp}                                                                                                                                                                                                                                                                                                                                                       \\ \hline
+    NEUDOSE OBC                                                                                                                                                                                                                                                                       &
+    McMaster University                                                                                                                                                                                                                                                               &
+    Primary: AVR32. Secondary: Xilinx Zynq-7000 SoC                                                                                                                                                                                                                                   &
+                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                      &
+    Primary is COTS chosen for high TRL to reduce mission risk; secondary is designed for radiation tolerance using rad-hard and non-rad-hard components.                                                                                                                             &
+    \cite{neudose_obc_pub}                                                                                                                                                                                                                                                                                                                                                                    \\ \hline
+    RADSAT-SK OBC                                                                                                                                                                                                                                                                     &
+    University of Saskatchewan                                                                                                                                                                                                                                                        &
+    ARM926EJ-S                                                                                                                                                                                                                                                                        &
+                                                                                                                                                                                                                                                                                      &
+                                                                                                                                                                                                                                                                                      &
+    \cite{radsat_sk_obc_git}                                                                                                                                                                                                                                                                                                                                                                  \\ \hline
+  \end{longtable}
+\end{landscape}
+\clearpage
+\begin{landscape}
+  \section{Appendix B: Commercial OBC Payload Integration Survey}
+  \makeatletter
+  \def\@currentlabel{B}
+  \makeatother
+  \label{sec:appendix_b}
+
+  Table~\ref{tab:appendix_b_commercial_obcs} surveys commercial OBC and payload computing platforms with respect to data and control communication throughputs, volatile/non-volatile buffering, transfer mechanisms, and event notification interfaces. The performance and specification confidence level of figures listed in Table~\ref{tab:appendix_b_commercial_obcs} are categorized according to the notation in Table~\ref{tab:appendix_b_notation}.
+
+  \begin{table}[h!]
+    \centering
+    \caption{Throughput and Performance Data Notation}
+    \label{tab:appendix_b_notation}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{|c|l|}
+      \hline
+      \textbf{Mark} & \textbf{Meaning}
+      \\ \hline
+      {[}M{]}       & Measured end-to-end or application-level throughput                                      \\
+      \hline
+      {[}S{]}       & Product-specific rate stated by the manufacturer
+      \\ \hline
+      {[}N{]}       & Nominal line rate implied by an interface name, such as
+      Gigabit Ethernet                                                                                         \\ \hline
+      {[}L{]}       & Latency figure rather than throughput
+      \\ \hline
+      {[}U{]}       & Undisclosed --- interface is present, but its usable or configured rate is not published
+      \\ \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{1em}
+
+  \renewcommand{\arraystretch}{1.25}
+  \begin{longtable}{|p{3.2cm}|p{4.5cm}|p{4.5cm}|p{4.5cm}|p{5.5cm}|}
+    \caption{Commercial OBC and Payload Computer Integration Survey} \label{tab:appendix_b_commercial_obcs}                                                                                                                                          \\ \hline
+    \textbf{OBC or Payload Computer}                                   &
+    \textbf{Payload Data Throughput}                                   &
+    \textbf{Control Throughput \& Event Interfaces}                    &
+    \textbf{Volatile \& Non-Volatile Buffering}                        &
+    \textbf{Transfer, Request, \& Notification Mechanism}                                                                                                                                                                                            \\ \hline
+    \endfirsthead
+    \caption[]{Commercial OBC and Payload Computer Integration Survey
+      (Continued)}
+    \\ \hline
+    \textbf{OBC or Payload Computer}                                   &
+    \textbf{Payload Data Throughput}                                   &
+    \textbf{Control Throughput \& Event Interfaces}                    &
+    \textbf{Volatile \& Non-Volatile Buffering}                        &
+    \textbf{Transfer, Request, \& Notification Mechanism}                                                                                                                                                                                            \\ \hline
+    \endhead
+    \hline
+    \endfoot
+
+    GomSpace NanoMind HP MK3 \cite{gomspace_nanomind_hp_mk3_ds}        &
+    Three independent full-duplex SpaceWire payload links. Vendor iperf3 tests
+    at the network layer with MTU 9000 report 150~Mbit/s for one unidirectional
+    interface [M], 150~Mbit/s aggregate for three unidirectional interfaces [M],
+    and 80~Mbit/s aggregate for three bidirectional interfaces [M]. RS-422 TCP
+    throughput is 3~Mbit/s through the processing system [M] and 2.2~Mbit/s
+    through programmable logic [M]. Storage tests report approximately 23~MB/s
+    read and 21~MB/s write for one eMMC [M], or 45~MB/s read and 41~MB/s write
+    when striped [M].                                                  &
+    Two CAN buses, $\text{I}^2\text{C}$, differential PPS and reference-clock
+    inputs, RS-422, and USB 2.0 host/device are exposed, but public CAN and
+    $\text{I}^2\text{C}$ rates are not stated [U]. The supplied
+    $\text{I}^2\text{C}$ software supports attached slave devices but not
+    multi-master operation or CSP over that interface.                 &
+    1~GB DDR3, reduced to 512~MB usable data memory when ECC is enabled; 256~MB
+    NOR flash; 70~GB pSLC eMMC and 233~GB MLC eMMC. The storage can be
+    configured using logical-volume arrangements such as striping or mirroring.
+    These are installed capacities, not stated payload reservations.
+                                                                       & SpaceWire endpoints are implemented in the Zynq programmable logic.
+    Payload data is presented through network interfaces and software drivers,
+    and the datasheet separately benchmarks processing-system and
+    programmable-logic RS-422 paths. The Zynq architecture permits memory
+    transfers between programmable logic and system memory, but the product
+    datasheet does not disclose the shipped DMA-channel mapping, descriptor
+    format, queue ownership, cache-coherency policy, or whether the SpaceWire
+    software path is zero-copy.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{SpaceWire: 80--150~Mbit/s [M]}                                     &                                                  &                                           & \\
+                                                                       & \textbf{RS-422: 2.2--3~Mbit/s [M]}                                         &                                                  &                                           & \\
+                                                                       & \textbf{Storage: 21--45~MB/s [M]}
+                                                                       &
+                                                                       & \textbf{Volatile: 512~MB--1~GB [S]}                                        &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 256~MB [S]}                & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 70--233~GB [S]}     & \\ \hline\hline
+
+    AAC Clyde Space Sirius QuadCore \cite{aac_sirius_quadcore_ds}      &
+    Four SpaceWire ports with a vendor figure of ``up to 300~Mbit'' through the
+    inbuilt router [S]. The public document does not say whether this is
+    per-port throughput, aggregate router throughput, or a nominal configuration
+    limit.                                                             &
+    Two CAN 2.0B buses are used for low-level commanding and monitoring [U]. The
+    unit also exposes an RS-422 UART, SPI, and nine GPIO signals, without
+    published rates. AAC explicitly describes CAN as the low-level control path
+    and the SpaceWire router as the fast payload/subsystem path.       & 4~Gbit SDRAM
+    for data plus 2~Gbit for EDAC, 2~Mbit MRAM boot memory, 256~Mbit SPI flash
+    image memory, and a 2~MiB L2 cache. The product sheet does not identify a
+    payload-reserved fraction.                                         & This is a clear
+    dual-plane architecture: payload data travels through the SpaceWire router,
+    while CAN carries commands and monitoring messages. Software may run Linux
+    or RTEMS. No public information identifies whether SpaceWire-to-SDRAM
+    movement uses a dedicated DMA engine, CPU copies, router-local buffering, or
+    a mixture of these.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{SpaceWire: Up to 300~Mbit/s [S]}
+                                                                       &
+                                                                       & \textbf{Volatile: 512~MB [S]}                                              &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 256~Kbit--32~MB [S]}       & \\ \hline\hline
+
+    AAC Clyde Space Sirius TCM LEON3FT \cite{aac_sirius_tcm_ds,
+    aac_sirius_tcm_kit_ds, ecss_rmap_std}                              &
+    Two SpaceWire interfaces at 50~Mbit/s [S]. The development-kit datasheet
+    explicitly lists RMAP support \cite{ecss_rmap_std}, making this one of the
+    clearer commercial examples of remote payload-memory access over SpaceWire.
+                                                                       & Three RS-422/485 UARTs, two additional RS-485-only UARTs, an RS-485 PPS
+    input, twelve GPIO, S- and X-band transceiver command/housekeeping channels,
+    and twelve RS-422 pulse-command outputs are provided; serial baud rates are
+    not disclosed [U].                                                 & 64~MB SDRAM after EDAC, 16~kB NVRAM after EDAC, 2~GB
+    system NAND after EDAC, and 32~GB mass-memory storage after EDAC.
+                                                                       & The TCM is specifically described as receiving and storing payload and
+    housekeeping data, distributing telecommands, and serving mass-memory data
+    to the transceiver. With RMAP \cite{ecss_rmap_std}, another SpaceWire node
+    can issue reads and writes to exposed memory, registers, FIFOs, or
+    mailboxes; pulse outputs provide an independent low-level command/event
+    mechanism. The public material does not expose the actual RMAP address map,
+    access-control rules, maximum transaction size, queue depth, or number of
+    simultaneously outstanding transactions.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{SpaceWire: 50~Mbit/s [S]}
+                                                                       &
+                                                                       & \textbf{Volatile: 64~MB [S]}                                               &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 16~kB--2~GB [S]}           & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 32~GB [S]}          & \\ \hline\hline
+
+    EnduroSat Onboard Computer \cite{endurosat_obc_ds, libcsp_basics}  &
+    100BASE-TX Ethernet $\rightarrow$ 100~Mbit/s nominal [N]. CAN-FD, RS-422,
+    RS-485, SPI, $\text{I}^2\text{C}$, and UART payload interfaces are present,
+    but their configured or achieved product-level rates are not published [U].
+                                                                       & Two CAN buses operate at 1~Mbit/s using CSP-ES [S] \cite{libcsp_basics}.
+    Sixteen payload enable, disable, and feedback GPIO signals and a
+    single-ended PPS signal provide discrete control, status, and
+    synchronization paths.                                             &
+    2~MB program flash, two 16~GB embedded SD-NAND devices, and two 2~MB FRAM
+    devices with ECC capability. The public page does not state the volatile
+    SRAM capacity or how much NAND/FRAM is available to payload applications.
+                                                                       & Packetized command and control is supplied through CSP-ES over CAN
+    \cite{libcsp_basics}. The flight-management software includes drivers,
+    housekeeping, logging, scheduling, tasking, compression, and archiving,
+    while direct GPIO provides payload power-control and feedback events. No
+    public DMA topology, queue API, payload file-service API, or
+    interrupt-completion model is documented.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{Ethernet: 100~Mbit/s [N]}
+                                                                       & \textbf{CAN (CSP): 1~Mbit/s [S]}
+                                                                       & \textbf{Flash: 2~MB [S]}                                                   &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 32~GB [S]}          & \\ \hline\hline
+
+    Spacemanic Deep Thought \cite{spacemanic_deep_thought_ds,
+    microchip_sam_v71_ds, libcsp_basics}                               &
+    External SPI is typically 40~MHz [S]. RMII and USB signals are exposed, but
+    the product datasheet gives no achieved Ethernet or USB throughput [U].
+                                                                       & CSP over CAN up to 1~Mbit/s [S] \cite{libcsp_basics}; CSP over
+    $\text{I}^2\text{C}$ up to 400~kHz [S]; CSP over RS-485/KISS up to
+    115,200~baud [S]; isolated $\text{I}^2\text{C}$ up to 400~kHz [S]. GPIO,
+    PWM, ADC, clock, and PPS-capable pins provide discrete events and timing.
+                                                                       & The SAMV71 family \cite{microchip_sam_v71_ds} provides up to 384~kB
+    on-chip SRAM. The board includes three 1~MiB FRAM devices and four 32~MiB
+    flash devices; Spacemanic explicitly says all seven external memories are
+    available for mission-specific software.                           & CAN is
+    implemented using the SAMV71's integrated MCAN peripheral followed by an
+    external CAN transceiver; it is not a separate external CAN-controller IC.
+    SPI, $\text{I}^2\text{C}$, GPIO, and RMII signals connect directly to the
+    MCU. The SAMV71 \cite{microchip_sam_v71_ds} silicon includes a 24-channel
+    central XDMAC and MCAN controllers with SRAM-based mailboxes, so
+    DMA-assisted peripheral transfers are architecturally possible; however, the
+    OBC datasheet does not say which supplied drivers use DMA or whether CAN
+    frames are copied from message RAM by the CPU.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{SPI: 40~MHz [S]}
+                                                                       & \textbf{CAN (CSP): 1~Mbit/s [S]}
+                                                                       & \textbf{Volatile: Up to 384~kB [S]}                                        &                                                                                                \\
+                                                                       &                                                                            & \textbf{$\text{I}^2\text{C}$ (CSP): 400~kHz [S]}
+                                                                       & \textbf{Flash: 3~MB--128~MB [S]}                                           &                                                                                                \\
+                                                                       &                                                                            & \textbf{RS-485/KISS: 115.2~kbaud [S]}            &                                           & \\ \hline\hline
+
+    Spacemanic Eddie \cite{spacemanic_eddie_ds, libcsp_basics}         &
+    External payload SPI up to 16~MHz [S].
+                                                                       & CSP over CAN up to 1~Mbit/s [S] \cite{libcsp_basics}; CSP over
+    $\text{I}^2\text{C}$ up to 400~kHz [S]; CSP over RS-485/KISS up to
+    38,400~baud [S]. GPIO, PWM, ADC, PPS, and a pin labelled DMA TRIG are
+    exposed.                                                           & No separate large
+    volatile payload RAM is advertised. Six 1~MB FRAM devices are all available
+    to mission software, and the example firmware can combine them as one FatFs
+    disk.                                                              & Unlike Deep Thought, Eddie uses an external
+    MCP25625 CAN controller connected to the MCU through SPI. The controller
+    provides an interrupt signal and receive-buffer-full signals, which notify
+    the MCU that CAN data or an event requires servicing. The public datasheet
+    identifies a DMA TRIG connector pin but does not define its transaction
+    protocol, destination buffer, handshake, or relationship to the CAN
+    controller.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{SPI: 16~MHz [S]}
+                                                                       & \textbf{CAN (CSP): 1~Mbit/s [S]}
+                                                                       & \textbf{Flash: 6~MB [S]}                                                   &                                                                                                \\
+                                                                       &                                                                            & \textbf{$\text{I}^2\text{C}$ (CSP): 400~kHz [S]} &                                           & \\
+                                                                       &                                                                            & \textbf{RS-485/KISS: 38.4~kbaud [S]}             &                                           & \\ \hline\hline
+
+    Xiphos Q8/Q8S \cite{xiphos_q8_ds}                                  &
+    Gigabit Ethernet gives 1~Gbit/s nominal [N]. USB 3.1 Gen 1, USB 2.0, 64
+    LVDS pairs, and three gigabit transceivers for interfaces such as SATA or
+    PCIe are available, but achieved payload throughput is not published [U].
+                                                                       & A CAN controller is implemented in programmable logic.
+    Factory-selectable RS-232/422/485, GPIO/MIO, and RTC wake/alarm interrupt
+    facilities are also provided, without public rates [U].            & 4~GB LPDDR4 with
+    EDAC, two 256~MB QSPI NOR devices, and two independent 128~GB eMMC devices
+    with separately controlled buses and power.                        & Payload interfaces
+    are accessed through standard Linux/Xilinx drivers or Xiphos custom
+    drivers; programmable logic can host mission-specific interface and
+    preprocessing logic. The public sheet does not disclose DMA topology,
+    descriptor rings, payload buffer allocation, measured storage bandwidth,
+    or whether the independent eMMC devices can be sustained concurrently at a
+    stated rate.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{Ethernet: 1~Gbit/s [N]}
+                                                                       &
+                                                                       & \textbf{Volatile: 4~GB [S]}                                                &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 512~MB [S]}                & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 256~GB [S]}         & \\ \hline\hline
+
+    Unibap iX10-101 \cite{unibap_ix10_101_ds}                          &
+    Two 10GBASE-T ports $\rightarrow$ 10~Gbit/s per port nominal [N]. The unit
+    also provides two Camera Link Base interfaces, two SpaceWire ports, two USB
+    3.0 ports, and one USB 2.0 port, with no achieved product-level rates
+    published for those interfaces [U].
+                                                                       & CAN 2.0/FD, two $\text{I}^2\text{C}$ interfaces, PPS/proprietary PLET
+    timing, one RS-232 port, and four RS-485/422 ports are provided without
+    published configured rates [U].                                    & 24~GB DDR4 ECC
+    associated with the CPU/GPU system, two 4~TB NVMe SSDs, and one 128~GB SATA
+    SSD. These are installed capacities rather than stated payload reservations.
+                                                                       & The vendor's architecture depicts sensors feeding FPGA-based data
+    acquisition, followed by CPU orchestration, GPU/VPU processing, and storage
+    used as both a buffer and long-term store before data is delivered to the
+    spacecraft bus, OBC, or communications system. This is strongly suggestive
+    of a DMA-oriented streaming architecture, but the public document does not
+    identify the DMA engines, descriptor format, backpressure mechanism, or
+    payload software API.                                                                                                                                                                                                                            \\
+    \cline{2-5}
+                                                                       & \textbf{Ethernet: 10~Gbit/s [N]}
+                                                                       &
+                                                                       & \textbf{Volatile: 24~GB [S]}                                               &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 128~GB--8.1~TB [S]} & \\ \hline\hline
+
+    KP Labs Antelope \cite{kplabs_antelope_ds}                         &
+    1 Gb Ethernet $\rightarrow$ 1~Gbit/s nominal [N]. LVDS or GTH transceivers,
+    USB 3.0, USB 2.0, and SATA are also available, but achieved rates are not
+    disclosed [U].                                                     & CAN, $\text{I}^2\text{C}$, SPI, RS-422/485,
+    UART, GPIO, and GPS PPS are present without product-level rates [U].
+                                                                       & 8~GB DDR4 with ECC, 4~GB SLC NAND, and optional SATA SSD storage.
+                                                                       & The Zynq UltraScale+ combines application processors, real-time
+    processors, and FPGA fabric for custom functions; software can run 64-bit
+    Linux or bare metal. This enables several possible payload-access
+    models---device drivers, memory-mapped FPGA registers, DMA streams, or
+    shared-memory queues---but the vendor does not publicly specify which are
+    supplied as standard payload services.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{Ethernet: 1~Gbit/s [N]}
+                                                                       &
+                                                                       & \textbf{Volatile: 8~GB [S]}                                                &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 4~GB [S]}                  & \\ \hline\hline
+
+    CesiumAstro SBC-1461 \cite{cesiumastro_sbc_1461_ds}                &
+    Two 10GBASE-KR ports $\rightarrow$ 10~Gbit/s each nominal [N], two
+    100BASE-TX ports $\rightarrow$ 100~Mbit/s each nominal [N], plus SGMII and
+    USB 3.0 [U].                                                       & Two RS-422/485 channels, SPI with two
+    chip-selects, UART, JTAG, and IEEE-1588 time synchronization are provided
+    without public application-level rates [U].                        & 2~GB ECC SDRAM, with an
+    option for 4~GB or more; 8~GB eMMC; and redundant 64~MB boot flash with
+    automatic failover.                                                & The product advertises
+    traffic routing and encryption without loading the processor cores,
+    indicating hardware offload for portions of the data path, and includes a
+    Linux SDK. However, the available detailed public sheet is dated 2022 and
+    does not expose the payload API, DMA engines, queue organization, measured
+    end-to-end throughput, or payload-reserved memory.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{Ethernet: 10~Gbit/s / 100~Mbit/s [N]}
+                                                                       &
+                                                                       & \textbf{Volatile: 2--4~GB [S]}                                             &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 64~MB [S]}                 & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 8~GB [S]}           & \\ \hline\hline
+
+    AAC Clyde Space Kryten-M3 \cite{aac_kryten_m3_ds}                  &
+    Twenty LVDS lines, three QSPI interfaces---two using LVDS signalling and one
+    using 3.3~V logic---and one SPI controller with seven chip-select lines.
+    Product-level rates: [U]. The LVDS lines are physical signalling resources
+    rather than a defined packet protocol in the public specification.
+                                                                       & One CAN interface, two $\text{I}^2\text{C}$ interfaces, eight UARTs, one
+    RS-422 interface that can instead be configured as two RS-485 links, GPIO
+    and DTMF. Rates: [U].                                              & Volatile: embedded SRAM/cache capacity is not
+    stated publicly [U]. Non-volatile: 16~MB MRAM and 4~GB SLC flash; the boot
+    configuration is listed as 256~kB eNVM plus 8~MB MRAM.
+                                                                       & SmartFusion2 integrates the Cortex-M3 and FPGA fabric. RTEMS,
+    EDAC-protected memories, hardware recovery, Reed--Solomon and cryptographic
+    acceleration are provided. Payload communication is therefore
+    software/driver mediated, with FPGA logic available for custom interfacing.
+    Public material does not disclose DMA request mappings, FIFO depths,
+    interrupt semantics, or whether LVDS/QSPI transfers can be performed
+    zero-copy.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  & \textbf{Flash: 16~MB [S]}                 & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 4~GB [S]}           & \\ \hline\hline
+
+    Pumpkin PPM family \cite{pumpkin_ppm_a3_ds}                        &
+    No uniform family-wide data interface exists. Individual PPMs expose the
+    selected MCU or DSP peripherals through the Pumpkin motherboard, including
+    SPI, serial interfaces, GPIO and variant-specific external buses. Rates:
+    [U]. Figures such as the D1's 32~MHz clock or 16~MIPS performance are
+    processor figures, not payload-link throughput.
+                                                                       & $\text{I}^2\text{C}$, UART, SPI, GPIO and hardware radio-handshake signals
+    are available in various configurations. Availability and pin mapping depend
+    on the PPM and motherboard combination. Rates: [U].
+                                                                       & Volatile: MCU-internal RAM and motherboard-dependent expansion; no common
+    family value. Non-volatile: MCU flash plus variant-specific storage. The PPM
+    D1, for example, includes 64~Mbit (8~MB) of external serial flash; the
+    flight motherboard can provide additional mass-storage functions.  & The PPM
+    is a replaceable processor module that maps MCU I/O to a common motherboard
+    architecture. Payload access is consequently through ordinary MCU peripheral
+    drivers, polling, interrupts or any DMA supported by the selected MCU. There
+    is no family-wide published DMA, message-buffer or shared-memory
+    architecture.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  & \textbf{Flash: Up to 8~MB [S]}            & \\ \hline\hline
+
+    C3S Electronics OBC \cite{c3s_obc_ds, c3s_3u_platform_ds}          &
+    Four M-LVDS channels arranged as two cold-redundant pairs. C3S platform
+    documentation identifies one redundant pair for communications equipment and
+    one pair for the payload. M-LVDS rate: [U].
+                                                                       & Two CAN interfaces forming one cold-redundant command-bus pair. CAN rate:
+    [U].                                                               & Volatile: 384~kB internal RAM. Program
+    storage: 2~MB internal flash. Non-volatile daughterboard: 16~MB
+    radiation-resistant MRAM and 16~GB eMMC.                           &
+    This is one of the clearest public examples of an explicit command/data
+    split: CAN is used as the command bus and M-LVDS as the payload data bus.
+    The interfaces and memories are cold-redundant at platform level. Public
+    documentation does not state the M-LVDS framing protocol, flow control, DMA
+    path, FIFO capacity, payload file API, or failover timing.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  & \textbf{Volatile: 384~kB [S]}             & \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 2--16~MB [S]}              & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 16~GB [S]}          & \\ \hline\hline
+
+    SkyLabs NANOobc-2 \cite{skylabs_nanoobc_2_ds}                      &
+    Two ``high-speed'' LVDS interfaces, alternatively configurable as
+    RS-422/RS-485. Verified product-specific rate: [U]. Some mirrored
+    documentation reports 20~Mbit/s for LVDS [S], but that figure is not clearly
+    stated on the current public manufacturer page.
+                                                                       & Redundant CAN-TS for telemetry and telecommand; eight multifunction GPIOs
+    can support UART, SPI, TWI and an onboard-time trigger. Rates: [U].
+                                                                       & Published revisions/listings conflict [U]. Values include 1--2~MB SRAM,
+    2--4~MB MRAM, a 4~Mbit telemetry NVM, and redundant NAND described variously
+    as 2~Gbit or 2~GB.                                                 & The
+    NANOsky CMM software provides CAN-TS and LVDS-TS stacks, permanent-storage
+    management, redundancy management, housekeeping acquisition, FDIR, software
+    scrubbing and firmware update. The PicoSkyFT architecture includes
+    prioritized interrupts and fault traps. Public sources do not specify DMA;
+    the documented model is primarily interrupt-, driver- and FDIR-managed
+    communication.
+    \\
+    \cline{2-5}
+                                                                       & \textbf{LVDS: 20~Mbit/s [S]}
+                                                                       &
+                                                                       & \textbf{Volatile: 1--2~MB [S]}                                             &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 500~kB--4~MB [S]}          & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 256~MB--2~GB [S]}   & \\ \hline\hline
+
+    SPiN MA61C \cite{spin_ma61c_ds, spin_esa_pres}                     &
+    CubeSat and SmallSat configurations provide two SpaceWire interfaces.
+    SpaceWire rate: [U]. The product is intended to route and translate payload
+    and subsystem data rather than act only as a conventional processor board.
+                                                                       & Depending on the configuration: CAN, $\text{I}^2\text{C}$, SPI, RS-422,
+    RS-485, RS-232, GPIO and MIL-STD-1553B. The ESA presentation reports a
+    system response time below 1~ms [L], but does not report sustained link
+    throughput [U].                                                    & Current vendor page lists 64~Mbit (8~MB) SRAM
+    and 64~Mbit (8~MB) flash. Some distributor material additionally lists
+    3~Gbit SDRAM.                                                      & MA61C stores device drivers
+    and electronic data sheets, scans interfaces, recognizes connected
+    equipment, self-configures, installs/selects drivers, buffers data, and
+    routes or converts traffic between interfaces. Its software uses data-link,
+    network and transport abstraction layers.
+    \\
+    \cline{2-5}
+                                                                       &
+                                                                       & \textbf{Response Latency: <1~ms [L]}
+                                                                       & \textbf{Volatile: 8--375~MB [S]}                                           &                                                                                                \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 8~MB [S]}                  & \\ \hline\hline
+
+    Argotec FERMI OBC\&DH \cite{argotec_fermi_ds}                      &
+    SpaceWire and LVDS are publicly listed as payload-capable high-speed
+    interfaces. Rates: [U].                                            & RS-422, SPI, $\text{I}^2\text{C}$ and GPIO
+    are listed for lower-rate equipment and control integration. Rates: [U].
+                                                                       & A current secondary product listing gives 256~MB SDRAM, 20~Mbit plus
+    5~Mbit EEPROM, and 16~GB ECC-corrected mass memory.
+                                                                       & A dual-core LEON3FT, fault-tolerant memory controller and Microchip RTG4
+    FPGA combine software processing with FPGA acceleration. Public sources do
+    not identify DMA channels, SpaceWire receive-buffer depths, descriptor
+    formats, interrupt routing or payload-access APIs.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  & \textbf{Volatile: 256~MB [S]}             & \\
+                                                                       &                                                                            &                                                  & \textbf{Flash: 3.1~MB [S]}                & \\
+                                                                       &                                                                            &                                                  & \textbf{Mass Storage: 16~GB [S]}          & \\ \hline\hline
+
+    SatRev OBC \cite{satrev_space_site, nasa_soa_2023}                 &
+    Interfaces and rates: [U]. SatRev's public website currently emphasizes
+    complete spacecraft and hosted payload services rather than exposing an OBC
+    product datasheet.                                                 & Interfaces and rates: [U].
+                                                                       & Volatile and non-volatile memory: [U].
+                                                                       & NASA's survey identifies a quad-core Cortex-A72 processor at 1.5~GHz and
+    gives board-level power figures, but does not provide a payload ICD,
+    interface list, buffer architecture or transfer mechanism.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+
+    Resilient Computing RadPC-SBC-001 \cite{nasa_soa_2026}             &
+    Payload interfaces and rates: [U].                                 & Control interfaces and rates: [U].
+                                                                       & Volatile and non-volatile memory: [U].
+                                                                       & NASA describes a 32-bit RISC-V processor implemented in an AMD Artix-7
+    FPGA with COTS single-event-effect mitigation. No public payload-interface
+    map, DMA implementation, shared-memory model or event-notification mechanism
+    was located.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+
+    Andes OBC \cite[p.~236]{nasa_soa_2024}\cite[p.~250]{nasa_soa_2026} &
+    Public commercial listings mention $\text{I}^2\text{C}$, SPI and UART, but
+    no clearly identified high-rate payload link or numeric rate was located.
+    Rates: [U].                                                        & $\text{I}^2\text{C}$, SPI and UART can provide
+    command/control integration. Rates: [U].
+                                                                       & Full cold redundancy is stated for the OBC, MRAM and NAND, but installed
+    memory capacities are not disclosed publicly [U].                  & Two
+    Cortex-M7 processors and duplicated MRAM/NAND implement cold redundancy.
+    Public information does not say whether each processor has a separate
+    interface controller or how buses are switched during failover.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+
+    Aerospacelab OBC \cite{nasa_soa_2024}                              &
+    The standalone OBC's public NASA entry does not state payload interfaces or
+    rates. A later Aerospacelab presentation lists configurations with up to 40
+    digital interfaces---including Ethernet and SpaceWire---rates: [U].
+                                                                       & The centralized-avionics concept lists CAN, RS-422 and RS-485 among its
+    control interfaces. Rates: [U].
+                                                                       & Memory capacities: [U].
+                                                                       & The documented processor is a Zynq-7045 containing dual Cortex-A9 cores
+    and Kintex-7 FPGA fabric, supervised by a rad-hard MCU and hardware
+    watchdog. No public DMA, buffering, payload-request or notification
+    specification is available.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+
+    Bradford Binary OBC \cite{nasa_soa_2023}                           &
+    Payload interfaces and rates: [U]. No current Binary product page or public
+    datasheet was located in Bradford's current catalogue.
+                                                                       & Control interfaces and rates: [U].
+                                                                       & Memory capacities: [U].
+                                                                       & The NASA 2023 table describes dual Cortex-R5 processors, software EDAC and
+    internal cold redundancy, with approximately 3~W peak and 1~W idle power.
+    The current Bradford portfolio promotes the Stellar system, suggesting
+    Binary is legacy.
+    \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+
+    Bradford Stellar OBC and Payload Data-Handling System
+    \cite{bradford_stellar_ds, nasa_soa_2026}                          &
+    Bradford describes Stellar as a scalable flight and payload data computer,
+    but the public page does not publish interface types, port counts or rates.
+    Throughputs: [U].                                                  & Control interfaces and rates: [U].                                         & Volatile
+    and non-volatile capacities: [U].                                  & NASA identifies dual PolarFire SoCs,
+    software EDAC and internal cold redundancy. The product combines spacecraft
+    control and payload data handling, but omits the memory map, failover, DMA
+    paths and payload software interface.                                                                                                                                                                                                            \\
+    \cline{2-5}
+                                                                       &                                                                            &                                                  &                                           & \\ \hline\hline
+  \end{longtable}
+\end{landscape}
+\clearpage
+\begin{landscape}
+  \section{Appendix C: PC/104 Pinout Survey}
+  \makeatletter
+  \def\@currentlabel{C}
+  \makeatother
+  \label{sec:appendix_c}
+
+  Table~\ref{tab:appendix_c_pc104_pinouts} surveys PC/104 header pinout assignments across ISO standards, open specifications, and commercial OBCs/peripherals.
+
+  \vspace{1em}
+  \renewcommand{\arraystretch}{1.2}
+  \directlua{pc104 = dofile('pc104.lua'); pc104.gen_table14()}
+\end{landscape}
+\clearpage
+
+\bibliographystyle{ieeetr}
+
+\bibliography{references}
+
+
+\end{document}
