@@ -36,6 +36,10 @@
 \date{June 2026}
 \revision{Revision 1}
 \companylogo{\includegraphics[scale=0.022]{../figures/utat_ss.png}}
+
+% Use numbered, sorted, and compressed IEEE-style citations.
+% natbib is loaded by ../preamble.tex.
+\PassOptionsToPackage{numbers,sort&compress}{natbib}
 \input{../preamble}
 % (netlist helper is loaded conditionally above)
 \begin{document}
@@ -180,24 +184,165 @@ TODO: specify the pinout and reference layout position.
 
 \subsection{MCU}
 
-TODO: describe some high level details about the MCU selected for the board
+The OBC v1.2 uses the STM32G431RBT6 as its main processing device. The MCU
+contains a 32-bit Arm Cortex-M4 processor with a single-precision floating-point
+unit, supports operation up to 170~MHz, and includes 128~kB of internal Flash
+memory and 32~kB of SRAM. The selected ordering code corresponds to a 64-pin
+LQFP package \cite{stm32g431-datasheet}. The Cortex-M4 architecture also
+provides interrupt handling, digital signal-processing instructions, and
+hardware debug support for embedded control applications
+\cite{arm-cortex-m4}.
+
+Within the OBC, the MCU runs onboard firmware, monitors board-level signals,
+controls connected circuitry, and communicates with the remaining spacecraft
+subsystems. The schematic assigns SPI, I\textsuperscript{2}C, UART, FDCAN, ADC,
+timer, GPIO, GNSS, thermal-monitoring, EPS, ADCS, and debug connections to the
+MCU \cite{obc-schematic}. Detailed operation of the connected subsystems is
+documented in their corresponding sections.
+
+Internal Notion meeting notes indicate that Zephyr RTOS compatibility was an
+important consideration during MCU selection. The notes also indicate a
+preference for an STM32 device while avoiding more clock speed or implementation
+complexity than the system required \cite{notion-meeting-notes}. The complete
+MCU trade study was not located, so the reason for choosing this exact part
+should still be confirmed with the original design lead.
+
+\subsubsection{Power and Analog Reference}
+
+The MCU is powered from the board's regulated 3.3~V rail. The schematic shows
+four \(0.1\,\mu\mathrm{F}\) capacitors together with \(1\,\mu\mathrm{F}\)
+and \(4.7\,\mu\mathrm{F}\) capacitors on the digital supply network
+\cite{obc-schematic}. The smaller capacitors provide a low-impedance path for
+higher-frequency current transients, while the larger capacitors provide local
+energy storage. This follows STM32G4 hardware guidance and general decoupling
+practice, which both emphasize local capacitors and short connections to the
+supply and ground pins \cite{stm32g4-hardware,analog-devices-decoupling}.
+
+The analog supply, VDDA, is derived from the 3.3~V rail through a ferrite bead
+and has separate local decoupling capacitors \cite{obc-schematic}. This creates
+a filtered analog power path and helps limit high-frequency digital supply noise
+from reaching the MCU's analog circuitry
+\cite{stm32g4-hardware,analog-devices-decoupling}.
+
+VREF+ is supplied by a dedicated 3.0~V reference circuit based on the ATL431
+adjustable shunt regulator \cite{obc-schematic}. Texas Instruments specifies
+the ATL431 as an adjustable precision shunt regulator intended for reference
+and regulation applications \cite{atl431-datasheet}. The generated voltage is
+filtered before reaching VREF+, providing a defined external reference for the
+MCU's ADC and DAC peripherals
+\cite{stm32g431-datasheet,obc-schematic,atl431-datasheet}.
+
+The MCU's VBAT pin is connected to the same regulated 3.3~V rail as the main
+supply rather than to an independent backup source \cite{obc-schematic}. The
+STM32 backup domain uses VBAT to supply the RTC, LSE oscillator, and backup
+registers when VDD is unavailable \cite{stm32g431-datasheet}. Since both pins
+depend on the same board rail in this revision, the backup domain will not
+remain powered after the 3.3~V rail is removed.
+
+\subsubsection{Reset and Fault Recovery}
+
+The NRST pin is held high through a 10~k\(\Omega\) pull-up resistor and has a
+10~nF capacitor connected to ground \cite{obc-schematic}. The board also
+includes a manual reset connection and a reset path from the debug interface.
+NRST is active low, so pulling the signal low generates a system reset
+\cite{stm32g431-datasheet,stm32g4-hardware}.
+
+An external STWD100 watchdog timer provides an additional recovery path
+\cite{obc-schematic}. During normal operation, the MCU periodically services
+the watchdog input. If this activity stops for longer than the configured
+timeout, the watchdog asserts its output \cite{stwd100-datasheet}. In the OBC
+schematic, this output is connected to the reset network so that the external
+watchdog can restart the MCU \cite{obc-schematic,stwd100-datasheet}.
+
+The STM32G431 also includes independent and window watchdog peripherals
+\cite{stm32g431-datasheet}. The external watchdog therefore reduces reliance
+on a single internal recovery mechanism.
+
+\subsubsection{Programming and Debugging}
+
+The MCU is programmed and debugged through Serial Wire Debug. PA13 and PA14 are
+assigned to SWDIO and SWCLK and are routed to the OBC debug interface
+\cite{stm32g431-datasheet,obc-schematic}. SWDIO carries bidirectional debug
+data, while SWCLK provides the associated clock \cite{arm-swd}. The board also
+exposes SWO for optional trace output and connects the debug interface to NRST
+\cite{stm32g431-datasheet,obc-schematic}.
+
+A separate UART transmit-and-receive pair is routed to the Ground Support
+Equipment interface \cite{obc-schematic}. Unlike SWD, this UART depends on
+operational firmware, but it provides a useful path for diagnostic messages,
+command testing, and board bring-up.
+
+\subsubsection{External Interfaces}
+
+The MCU communicates with the rest of the OBC through SPI,
+I\textsuperscript{2}C, UART, FDCAN, GPIO, timer, and analog connections
+\cite{obc-schematic}. These include SPI1 to the external Flash memory,
+I\textsuperscript{2}C to the EPS, UART connections to the ADCS and GNSS-related
+circuitry, FDCAN to the spacecraft CAN bus, an ADC input from the thermal
+monitoring circuitry, a timer input for the GNSS pulse-per-second signal, and
+GPIO outputs for thermistor selection and board-level control. The STM32G431
+provides the corresponding peripheral resources required for these connections
+\cite{stm32g431-datasheet}.
 
 \subsection{External Clocks}
 
-TODO: describe the external clocks and the reason for use, specify how they are
-connected to the MCU
+The board provides both high-speed and low-speed external crystal circuits
+\cite{obc-schematic}.
+
+A 24~MHz crystal is connected between OSC\_IN and OSC\_OUT with two 5.1~pF load
+capacitors \cite{obc-schematic}. This provides an available High-Speed External
+clock source. The STM32G431 supports an HSE crystal or ceramic resonator from
+4~MHz to 48~MHz, so the selected value is within the supported range
+\cite{stm32g431-datasheet}. The final system clock still depends on the
+firmware clock and PLL configuration.
+
+A separate 32.768~kHz Abracon ABS07-series crystal is connected between
+OSC32\_IN and OSC32\_OUT with two 3.9~pF capacitors
+\cite{obc-schematic,abracon-abs07}. This provides an available Low-Speed
+External source for the backup domain and RTC.
+
+The crystal, MCU oscillator amplifier, external capacitors, and PCB parasitic
+capacitance form the complete oscillator network. The load-capacitor values
+should therefore be validated using the exact crystal load specification and
+estimated board parasitics \cite{stm32-oscillator-guide,abracon-abs07}.
+STMicroelectronics also recommends placing the crystal and its supporting
+components close to the oscillator pins and keeping the traces short
+\cite{stm32-oscillator-guide}. These layout recommendations should be checked
+against the PCB layout rather than the schematic alone.
 
 \subsection{External Flash Memory}
 
-TODO: descrive the external clocks and the reason for use, specify how its
-connected to the MCU.
+The OBC includes an SST26VF064B external serial Flash memory device connected
+to SPI1 \cite{obc-schematic}. Microchip specifies the device as a 64-Mbit, or
+8-MB, non-volatile memory supporting single-, dual-, and quad-bit serial modes
+\cite{sst26vf064b-datasheet}.
+
+The reviewed schematic uses chip-select, serial-clock, MOSI, and MISO
+connections between the MCU and Flash device \cite{obc-schematic}. These
+signals are consistent with the device's standard single-bit SPI operation
+\cite{sst26vf064b-datasheet}. The intended stored contents were not identified
+in the available notes, so this section does not assume whether the device was
+intended for telemetry, firmware images, event logs, configuration data, or
+another use.
 
 \subsection{RTC}
 
-TODO: describe the RTC usecase and specify how it is connected to the MCU
+The real-time clock is integrated into the STM32G431 rather than implemented
+using a separate RTC IC \cite{stm32g431-datasheet,stm32g4-reference-manual}.
+The RTC can use the external 32.768~kHz LSE crystal and is part of the MCU's
+backup domain \cite{stm32g4-reference-manual}.
 
-Real time clock (RTC) is a battery-powered external clock available to OBC for
-timekeeping and synchronization purposes.
+The MCU also includes an internal low-speed RC oscillator. The external crystal
+provides a crystal-based timing source, but its actual accuracy depends on the
+crystal tolerance, temperature behaviour, load matching, PCB parasitics, and
+firmware calibration
+\cite{stm32-oscillator-guide,abracon-abs07,stm32g4-reference-manual}.
+
+VBAT is connected to the normal 3.3~V rail in this board revision
+\cite{obc-schematic}. The backup domain can therefore operate while the board
+is powered, but it does not have a separate energy source to maintain time after
+the main rail is lost. The exact use of the RTC in the OBC firmware has not yet
+been confirmed.
 
 \section{Mechanical and Layout}
 
@@ -218,6 +363,74 @@ corresponding subsections.
 \section{Bringup Log}
 
 TODO: specify tests that have been conducted (reference to notion)
+
+\begin{thebibliography}{99}
+
+  \bibitem{stm32g431-datasheet}
+  STMicroelectronics,
+  ``STM32G431x6, STM32G431x8, STM32G431xB: Arm Cortex-M4 32-bit
+  MCU+FPU, 170 MHz/213 DMIPS, up to 128 KB Flash, 32 KB SRAM,
+  rich analog, math accelerator,''
+  Datasheet DS12589, Rev. 6, Oct. 2021.
+
+  \bibitem{arm-cortex-m4}
+  Arm Ltd.,
+  ``Cortex-M4 Processor Technical Reference Manual,''
+  ARM DDI 0439C, 2010.
+
+  \bibitem{obc-schematic}
+  University of Toronto Aerospace Team, Space Systems Division,
+  ``OBC v1.2 schematic: STM32G431 MCU and associated hierarchical
+  sheets,'' internal Altium design files, unpublished, 2026.
+
+  \bibitem{notion-meeting-notes}
+  University of Toronto Aerospace Team, Space Systems Division,
+  ``FDIR Sync with EPS and Firmware,'' internal Notion meeting notes,
+  unpublished, n.d., accessed Jul. 16, 2026.
+
+  \bibitem{stm32g4-hardware}
+  STMicroelectronics,
+  ``Getting started with STM32G4 Series hardware development boards,''
+  Application Note AN5093, Rev. 2, Oct. 2019.
+
+  \bibitem{analog-devices-decoupling}
+  Analog Devices, Inc.,
+  ``MT-101: Decoupling Techniques,'' tutorial MT-101, Feb. 2015.
+
+  \bibitem{atl431-datasheet}
+  Texas Instruments,
+  ``ATL43x 2.5-V Low-IQ Adjustable Precision Shunt Regulator,''
+  Datasheet, Rev. E, Dec. 2024.
+
+  \bibitem{stwd100-datasheet}
+  STMicroelectronics,
+  ``STWD100 Watchdog Timer Circuit,'' Datasheet DS5579.
+
+  \bibitem{arm-swd}
+  Arm Ltd.,
+  ``Serial Wire Debug,'' \textit{Arm DSTREAM Target Interface
+  Connections}, online documentation, accessed Jul. 16, 2026.
+
+  \bibitem{stm32-oscillator-guide}
+  STMicroelectronics,
+  ``Guidelines for oscillator design on STM8AF/AL/S and STM32 MCUs/MPUs,''
+  Application Note AN2867, Rev. 24, Mar. 2026.
+
+  \bibitem{abracon-abs07}
+  Abracon LLC,
+  ``ABS07 32.768 kHz SMD Crystal,'' product datasheet.
+
+  \bibitem{sst26vf064b-datasheet}
+  Microchip Technology Inc.,
+  ``SST26VF064B/SST26VF064BA 2.5-V/3.0-V 64-Mbit Serial Quad I/O
+  Flash Memory,'' Datasheet DS20005119G.
+
+  \bibitem{stm32g4-reference-manual}
+  STMicroelectronics,
+  ``STM32G4 Series advanced Arm-based 32-bit MCUs,''
+  Reference Manual RM0440, Rev. 9, Mar. 2025.
+
+\end{thebibliography}
 
 \end{document}
 
